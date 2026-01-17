@@ -1,0 +1,17 @@
+[workspace]
+authors = ["Michael Booth <michael@databooth.com.au>"]
+channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
+name = "mojo-benchsuite"
+platforms = ["osx-arm64", "linux-64"]
+version = "0.1.0"
+
+[activation]
+env = { MOJO_PATH = "$PIXI_PROJECT_ROOT/src" }
+
+[tasks]
+mojo-version = "mojo --version"
+run-example = "mojo -I src examples/simple_benches.mojo"
+test = "echo 'No tests yet'"
+
+[dependencies]
+mojo = "*"
