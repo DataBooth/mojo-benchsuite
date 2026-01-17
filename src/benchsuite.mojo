@@ -1,6 +1,7 @@
 from benchmark import run, Report, Unit
 from collections import Dict, List
 from time import perf_counter
+from pathlib import Path
 
 struct EnvironmentInfo(Copyable, Movable):
     var mojo_version: String
@@ -97,6 +98,43 @@ struct BenchReport:
             csv += String(r.iterations) + "\n"
         
         return csv
+    
+    fn save_report(self, output_dir: String, name_prefix: String) raises:
+        """Save reports to disk with timestamped filenames.
+        
+        Creates markdown and CSV files with format:
+            {output_dir}/{name_prefix}_{timestamp}.{md,csv}
+        
+        Args:
+            output_dir: Directory to save reports (will be created if needed)
+            name_prefix: Prefix for report files (e.g., "bench_adaptive")
+        """
+        from python import Python
+        
+        # Get timestamp using Python's datetime
+        var datetime = Python.import_module("datetime")
+        var py_timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        var timestamp = String(py_timestamp)
+        
+        # Create output directory if it doesn't exist
+        var pathlib = Python.import_module("pathlib")
+        var path_obj = pathlib.Path(output_dir)
+        var py_true = Python.evaluate("True")
+        path_obj.mkdir(parents=py_true, exist_ok=py_true)
+        
+        # Save markdown report
+        var md_filename = output_dir + "/" + name_prefix + "_" + timestamp + ".md"
+        with open(md_filename, "w") as f:
+            _ = f.write(self.to_markdown())
+        
+        # Save CSV report
+        var csv_filename = output_dir + "/" + name_prefix + "_" + timestamp + ".csv"
+        with open(csv_filename, "w") as f:
+            _ = f.write(self.to_csv())
+        
+        print("Reports saved:")
+        print("  Markdown: " + md_filename)
+        print("  CSV:      " + csv_filename)
     
     fn _format_time(self, ns: Float64) -> String:
         """Format time in appropriate units."""

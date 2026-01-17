@@ -217,3 +217,18 @@ def main():
     print("CSV format:")
     print()
     print(report.to_csv())
+    
+    # Save reports to disk
+    print()
+    print("=" * 60)
+    print("Saving Reports to Disk")
+    print("=" * 60)
+    print()
+    
+    try:
+        report.save_report("benchmarks/reports", "comprehensive")
+        print()
+        print("✓ Reports saved successfully")
+        print("  View saved reports in: benchmarks/reports/")
+    except:
+        print("✗ Failed to save reports")

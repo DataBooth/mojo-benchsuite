@@ -8,7 +8,8 @@ __pycache__/
 *.pyc
 *.pyo
 
-# Benchmark results (future caching feature)
+# Benchmark results and reports
+benchmarks/reports/
 results/
 .benchmark_cache/
 # pixi environments

@@ -160,6 +160,7 @@ The runner automatically:
 - Console: Human-readable tables with formatted timing
 - Markdown: Ready for documentation/reports
 - CSV: For spreadsheet analysis or plotting
+- **Timestamped file saving**: Automatically save reports to `benchmarks/reports/`
 
 ✅ **Statistical Reporting**
 - Mean, minimum, and maximum execution times
@@ -215,9 +216,17 @@ report.add_result(bench_operation2())
 # Console output
 report.print_console()
 
-# Export formats
+# Export to strings
 print(report.to_markdown())
 print(report.to_csv())
+
+# Save timestamped reports to disk
+try:
+    report.save_report("benchmarks/reports", "my_benchmark")
+    # Creates: benchmarks/reports/my_benchmark_20260117_143022.md
+    #          benchmarks/reports/my_benchmark_20260117_143022.csv
+except:
+    print("Failed to save reports")
 ```
 
 ## Output Examples

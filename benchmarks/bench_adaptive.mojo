@@ -79,3 +79,15 @@ def main():
     print("Notice how iteration counts vary based on operation speed:")
     print("- Fast operations: More iterations for reliable statistics")
     print("- Slow operations: Fewer iterations to keep runtime reasonable")
+    
+    # Save reports to disk
+    print()
+    print("=" * 60)
+    print()
+    
+    try:
+        report.save_report("benchmarks/reports", "adaptive")
+        print()
+        print("✓ Benchmark complete - reports saved to benchmarks/reports/")
+    except:
+        print("✗ Note: Could not save reports to disk")
