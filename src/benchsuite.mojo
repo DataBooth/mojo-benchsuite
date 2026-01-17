@@ -127,36 +127,42 @@ struct BenchReport:
         if len(self.results) == 1:
             # First result - print header
             print(self.env.value().format())
-            print("────────────────────────────────────────────────────────────")
-            print("Benchmark                    Mean            Min             Max         Iterations")
-            print("────────────────────────────────────────────────────────────")
+            print("────────────────────────────────────────────────────────────────────────────")
+            print("Benchmark                    Mean            Min             Max         Iterations  Total (s)")
+            print("────────────────────────────────────────────────────────────────────────────")
         
         var mean_str = self._format_time(result.mean_time_ns)
         var min_str = self._format_time(result.min_time_ns)
         var max_str = self._format_time(result.max_time_ns)
+        var total_secs = (result.mean_time_ns * Float64(result.iterations)) / 1_000_000_000.0
+        var total_str = String(Float64(Int(total_secs * 100.0)) / 100.0)
         
         print(result.name.ljust(28) + " " + mean_str.ljust(15) + " " + 
-              min_str.ljust(15) + " " + max_str.ljust(15) + " " + String(result.iterations))
+              min_str.ljust(15) + " " + max_str.ljust(15) + " " + 
+              String(result.iterations).ljust(11) + " " + total_str)
 
     fn print_console(self):
         """Print results in human-readable console format."""
         if self.env:
             print(self.env.value().format())
-        print("────────────────────────────────────────────────────────────")
+        print("────────────────────────────────────────────────────────────────────────────")
         print("Benchmark Results")
-        print("────────────────────────────────────────────────────────────")
+        print("────────────────────────────────────────────────────────────────────────────")
         print()
-        print("Benchmark                    Mean            Min             Max         Iterations")
-        print("────────────────────────────────────────────────────────────")
+        print("Benchmark                    Mean            Min             Max         Iterations  Total (s)")
+        print("────────────────────────────────────────────────────────────────────────────")
         
         for i in range(len(self.results)):
             var r = self.results[i].copy()
             var mean_str = self._format_time(r.mean_time_ns)
             var min_str = self._format_time(r.min_time_ns)
             var max_str = self._format_time(r.max_time_ns)
+            var total_secs = (r.mean_time_ns * Float64(r.iterations)) / 1_000_000_000.0
+            var total_str = String(Float64(Int(total_secs * 100.0)) / 100.0)
             
             print(r.name.ljust(28) + " " + mean_str.ljust(15) + " " + 
-                  min_str.ljust(15) + " " + max_str.ljust(15) + " " + String(r.iterations))
+                  min_str.ljust(15) + " " + max_str.ljust(15) + " " + 
+                  String(r.iterations).ljust(11) + " " + total_str)
     
     fn to_markdown(self) -> String:
         """Export results as Markdown table with total runtime column."""
