@@ -11,6 +11,32 @@ A lightweight benchmarking framework for Mojo with comprehensive reporting capab
 
 **Status**: Early prototype using `time.perf_counter` for measurements.
 
+## Why not just use stdlib `benchmark`?
+
+Mojo's stdlib `benchmark` module is excellent for low-level, precise benchmarking. BenchSuite complements it by adding:
+
+**🎯 Suite-Level Organisation**
+- Group related benchmarks together
+- Auto-discovery via naming convention (`bench_*` files)
+- Run all benchmarks with a single command
+
+**📊 Comprehensive Reporting**
+- Multiple output formats (console tables, markdown, CSV)
+- Statistical analysis (mean/min/max) across iterations
+- Environment capture for reproducibility
+
+**🔄 Adaptive Iteration Counts**
+- Automatically adjusts iterations to meet minimum runtime
+- Ensures reliable statistics for both fast and slow operations
+- No manual tuning required
+
+**💡 Lower Boilerplate**
+- Simple function definitions
+- Automatic statistics collection
+- Ready-to-share reports
+
+Think of it as the relationship between Python's `unittest` (low-level) and `pytest` (high-level convenience). Both have their place!
+
 ## Quick Start
 
 ### Simple Example
@@ -61,6 +87,64 @@ This demonstrates:
 - Markdown export for documentation
 - CSV export for analysis
 
+### Auto-Adaptive Benchmarking
+
+The framework can automatically adjust iteration counts to ensure reliable statistics:
+
+```bash
+pixi run run-adaptive
+```
+
+This example shows:
+- **Automatic iteration adjustment**: Fast operations run more iterations, slow operations fewer
+- **Naming convention**: Functions prefixed with `bench_*` (like `test_*` in TestSuite)
+- **Minimal boilerplate**: Just define your benchmark functions
+
+```mojo
+from benchsuite import auto_benchmark, BenchReport
+
+fn bench_fast_operation():
+    var x = 42.0 + 58.0
+    _ = x
+
+fn bench_slow_operation():
+    var sum = 0
+    for i in range(10000):
+        sum += i
+    _ = sum
+
+def main():
+    var report = BenchReport()
+    
+    # auto_benchmark figures out optimal iteration count
+    report.add_result(auto_benchmark[bench_fast_operation]("bench_fast_operation"))
+    report.add_result(auto_benchmark[bench_slow_operation]("bench_slow_operation"))
+    
+    report.print_console()
+```
+
+### Auto-Discovery
+
+Like TestSuite's `test_*` pattern, BenchSuite supports auto-discovery of `bench_*` files:
+
+```bash
+# Create benchmarks/ directory with bench_*.mojo files
+mkdir benchmarks
+# benchmarks/bench_algorithms.mojo
+# benchmarks/bench_data_structures.mojo
+# benchmarks/bench_string_ops.mojo
+
+# Run all discovered benchmarks
+pixi run bench-all
+# or: python scripts/run_benchmarks.py
+```
+
+The runner automatically:
+- Discovers all `bench_*.mojo` files in `benchmarks/` directory
+- Runs each benchmark suite
+- Reports success/failure for each
+- Provides a summary
+
 ## Features
 
 ✅ **Multiple Output Formats**
@@ -77,6 +161,16 @@ This demonstrates:
 - Mojo version
 - Operating system
 - Extensible for CPU/GPU info
+
+✅ **Adaptive Iteration Counts**
+- Automatically adjusts based on operation speed
+- Ensures minimum runtime for reliable statistics
+- No manual tuning required
+
+✅ **Auto-Discovery**
+- `bench_*` naming convention (like `test_*` in TestSuite)
+- Python script for running all benchmarks
+- Organise benchmarks by topic
 
 ## Usage
 

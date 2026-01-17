@@ -1,5 +1,6 @@
 from benchmark import run, Report, Unit
 from collections import Dict, List
+from time import perf_counter
 
 struct EnvironmentInfo(Copyable, Movable):
     var mojo_version: String
@@ -133,7 +134,7 @@ struct BenchConfig:
     var capture_env: Bool
     var export_json: Bool
     
-    fn __init__(out self, warmup_iters: Int = 5, max_iters: Int = 1000,
+    fn __init__(out self, warmup_iters: Int = 5, max_iters: Int = 1000, 
                 min_total_time: Float64 = 1.0, unit: String = "ms",
                 capture_env: Bool = True, export_json: Bool = False):
         self.warmup_iters = warmup_iters
@@ -142,3 +143,70 @@ struct BenchConfig:
         self.unit = unit
         self.capture_env = capture_env
         self.export_json = export_json
+
+
+fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 1.0) -> BenchResult:
+    """Automatically run benchmark with adaptive iteration count.
+    
+    Runs the benchmark function multiple times, automatically adjusting the
+    iteration count to meet a minimum runtime target. This ensures statistical
+    reliability for both fast and slow operations.
+    
+    Args:
+        name: Name of the benchmark
+        min_runtime_secs: Minimum target runtime in seconds (default: 1.0s)
+    
+    Returns:
+        BenchResult with statistics
+    """
+    # Warm-up: run a few times to prime caches
+    for _ in range(5):
+        func()
+    
+    # Initial calibration: estimate iterations needed
+    var calibration_start = perf_counter()
+    func()
+    var single_duration = perf_counter() - calibration_start
+    
+    # Calculate iterations to meet minimum runtime
+    var iterations: Int
+    if single_duration < 0.000001:  # Very fast (< 1µs)
+        iterations = 1_000_000
+    elif single_duration < 0.0001:  # Fast (< 100µs)
+        iterations = Int(min_runtime_secs / single_duration)
+    elif single_duration < 0.01:    # Medium (< 10ms)
+        iterations = Int(min_runtime_secs / single_duration)
+    else:                            # Slow (> 10ms)
+        iterations = max(10, Int(min_runtime_secs / single_duration))
+    
+    # Cap at reasonable maximums
+    iterations = min(iterations, 10_000_000)
+    iterations = max(iterations, 10)  # Minimum 10 iterations
+    
+    # Run benchmark and collect timing data
+    var times = List[Float64]()
+    var total_start = perf_counter()
+    
+    for _ in range(iterations):
+        var iter_start = perf_counter()
+        func()
+        var iter_duration = (perf_counter() - iter_start) * 1_000_000_000.0
+        times.append(iter_duration)
+    
+    var total_duration = perf_counter() - total_start
+    
+    # Calculate statistics
+    var sum_val: Float64 = 0.0
+    var min_ns = times[0]
+    var max_ns = times[0]
+    
+    for i in range(len(times)):
+        sum_val += times[i]
+        if times[i] < min_ns:
+            min_ns = times[i]
+        if times[i] > max_ns:
+            max_ns = times[i]
+    
+    var mean_ns = sum_val / Float64(len(times))
+    
+    return BenchResult(name, mean_ns, min_ns, max_ns, iterations)
