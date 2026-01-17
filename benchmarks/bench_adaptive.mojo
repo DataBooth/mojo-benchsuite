@@ -6,7 +6,7 @@ Demonstrates:
 - Simple, low-boilerplate benchmark definitions
 """
 
-from benchsuite import EnvironmentInfo, BenchReport, auto_benchmark
+from benchsuite import BenchReport
 
 
 fn add_numbers():
@@ -44,51 +44,17 @@ def main():
     print("Mojo BenchSuite - Auto-Adaptive Example")
     print("=" * 60)
     print()
-    print("Note: Iteration counts automatically adjusted to meet minimum runtime")
-    print("This ensures reliable statistics for both fast and slow operations")
-    print()
-    print("Running benchmarks...")
-    print()
     
+    # Create report with auto-print enabled (default)
     var report = BenchReport()
-    report.env = EnvironmentInfo()
     
-    # Each function automatically determines optimal iteration count
-    # Note: bench_* naming is for FILES (auto-discovery), not functions!
-    #       Functions can have any descriptive names
-    
-    print("  [1/4] add_numbers...")
-    report.add_result(auto_benchmark[add_numbers]("add_numbers", 0.5))
-    
-    print("  [2/4] sum_loop...")
-    report.add_result(auto_benchmark[sum_loop]("sum_loop", 0.5))
-    
-    print("  [3/4] concat_strings...")
-    report.add_result(auto_benchmark[concat_strings]("concat_strings", 0.5))
-    
-    print("  [4/4] build_list...")
-    report.add_result(auto_benchmark[build_list]("build_list", 0.5))
-    
-    print()
-    print("=" * 60)
-    print()
-    
-    # Display results
-    report.print_console()
+    # Benchmark functions - results automatically print as they complete
+    report.benchmark[add_numbers]("add_numbers", 0.5)
+    report.benchmark[sum_loop]("sum_loop", 0.5)
+    report.benchmark[concat_strings]("concat_strings", 0.5)
+    report.benchmark[build_list]("build_list", 0.5)
     
     print()
     print("Notice how iteration counts vary based on operation speed:")
     print("- Fast operations: More iterations for reliable statistics")
     print("- Slow operations: Fewer iterations to keep runtime reasonable")
-    
-    # Save reports to disk
-    print()
-    print("=" * 60)
-    print()
-    
-    try:
-        report.save_report("benchmarks/reports", "adaptive")
-        print()
-        print("✓ Benchmark complete - reports saved to benchmarks/reports/")
-    except:
-        print("✗ Note: Could not save reports to disk")

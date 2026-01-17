@@ -63,13 +63,66 @@ struct BenchResult(Copyable, Movable):
 struct BenchReport:
     var results: List[BenchResult]
     var env: Optional[EnvironmentInfo]
+    var auto_print: Bool
+    var auto_save: Bool
+    var save_dir: String
+    var name_prefix: String
 
-    fn __init__(out self):
+    fn __init__(out self, auto_print: Bool = True, auto_save: Bool = False, 
+                save_dir: String = "benchmarks/reports", name_prefix: String = "benchmark"):
+        """Create a benchmark report.
+        
+        Args:
+            auto_print: Automatically print console output after each benchmark (default: True)
+            auto_save: Automatically save reports to disk (default: False)
+            save_dir: Directory for saved reports (default: "benchmarks/reports")
+            name_prefix: Prefix for saved report files (default: "benchmark")
+        """
         self.results = List[BenchResult]()
-        self.env = None
+        self.env = EnvironmentInfo()
+        self.auto_print = auto_print
+        self.auto_save = auto_save
+        self.save_dir = save_dir
+        self.name_prefix = name_prefix
+    
+    fn benchmark[func: fn() -> None](mut self, name: String, min_runtime_secs: Float64 = 1.0):
+        """Run a benchmark with adaptive iteration counting.
+        
+        Args:
+            name: Name of the benchmark
+            min_runtime_secs: Minimum target runtime in seconds (default: 1.0)
+        """
+        var result = auto_benchmark[func](name, min_runtime_secs)
+        var result_copy = result.copy()
+        self.add_result(result^)
+        
+        if self.auto_print:
+            self._print_single_result(result_copy)
+        
+        if self.auto_save:
+            try:
+                self.save_report(self.save_dir, self.name_prefix)
+            except:
+                print("Warning: Failed to save report")
     
     fn add_result(mut self, var result: BenchResult):
         self.results.append(result^)
+    
+    fn _print_single_result(self, result: BenchResult):
+        """Print a single benchmark result."""
+        if len(self.results) == 1:
+            # First result - print header
+            print(self.env.value().format())
+            print("────────────────────────────────────────────────────────────")
+            print("Benchmark                    Mean            Min             Max         Iterations")
+            print("────────────────────────────────────────────────────────────")
+        
+        var mean_str = self._format_time(result.mean_time_ns)
+        var min_str = self._format_time(result.min_time_ns)
+        var max_str = self._format_time(result.max_time_ns)
+        
+        print(result.name.ljust(28) + " " + mean_str.ljust(15) + " " + 
+              min_str.ljust(15) + " " + max_str.ljust(15) + " " + String(result.iterations))
 
     fn print_console(self):
         """Print results in human-readable console format."""

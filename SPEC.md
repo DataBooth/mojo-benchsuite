@@ -28,19 +28,32 @@ struct BenchResult:
     var max_ns: Float64
     var iterations: Int
 
-# Report with multiple output formats
+# Report with automatic benchmarking and output
 struct BenchReport:
-    var env: EnvironmentInfo
+    # Constructor with configurable auto-print/auto-save
+    fn __init__(out self, 
+                auto_print: Bool = True,           # Auto-print after each benchmark
+                auto_save: Bool = False,           # Auto-save reports
+                save_dir: String = "benchmarks/reports",
+                name_prefix: String = "benchmark")
+    
+    # Simplified benchmarking - runs, captures, and auto-prints/saves
+    fn benchmark[func: fn() -> None](
+        inout self, 
+        name: String,
+        min_runtime_secs: Float64 = 1.0)
+    
+    # Manual control methods
     fn add_result(inout self, result: BenchResult)
     fn print_console(self)                          # Console table
     fn to_markdown(self) -> String                  # Markdown table
     fn to_csv(self) -> String                       # CSV format
     fn save_report(self, dir: String, prefix: String) raises  # Timestamped files
 
-# Adaptive benchmarking - auto-adjusts iterations
+# Low-level adaptive benchmarking function (advanced use)
 fn auto_benchmark[func: fn() -> None](
     name: String,
-    min_runtime: Float64 = 1.0  # Target min runtime in seconds
+    min_runtime: Float64 = 1.0
 ) -> BenchResult
 ```
 

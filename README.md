@@ -105,7 +105,7 @@ This example shows:
 - **Minimal boilerplate**: Just define your functions and benchmark them
 
 ```mojo
-from benchsuite import auto_benchmark, BenchReport
+from benchsuite import BenchReport
 
 # Functions can have any descriptive names
 fn calculate_sum():
@@ -119,13 +119,11 @@ fn process_data():
     _ = sum
 
 def main():
-    var report = BenchReport()
+    var report = BenchReport()  # Auto-prints results by default
     
-    # auto_benchmark figures out optimal iteration count
-    report.add_result(auto_benchmark[calculate_sum]("calculate_sum"))
-    report.add_result(auto_benchmark[process_data]("process_data"))
-    
-    report.print_console()
+    # Benchmark and print results automatically
+    report.benchmark[calculate_sum]("calculate_sum")
+    report.benchmark[process_data]("process_data")
 ```
 
 ### Auto-Discovery
@@ -215,27 +213,24 @@ fn bench_my_operation() -> BenchResult:
 ### Generating Reports
 
 ```mojo
+# Default: auto-print results
 var report = BenchReport()
-report.env = EnvironmentInfo()
+report.benchmark[my_function]("my_function")
 
-# Add benchmark results
-report.add_result(bench_operation1())
-report.add_result(bench_operation2())
+# With auto-save enabled
+var report = BenchReport(auto_save=True, name_prefix="my_benchmark")
+report.benchmark[my_function]("my_function")  # Auto-saves timestamped reports
 
-# Console output
-report.print_console()
+# Manual control
+var report = BenchReport(auto_print=False)
+report.benchmark[func1]("func1")
+report.benchmark[func2]("func2")
+report.print_console()  # Print all at once
+report.save_report("benchmarks/reports", "my_benchmark")  # Manual save
 
 # Export to strings
 print(report.to_markdown())
 print(report.to_csv())
-
-# Save timestamped reports to disk
-try:
-    report.save_report("benchmarks/reports", "my_benchmark")
-    # Creates: benchmarks/reports/my_benchmark_20260117_143022.md
-    #          benchmarks/reports/my_benchmark_20260117_143022.csv
-except:
-    print("Failed to save reports")
 ```
 
 ## Output Examples
