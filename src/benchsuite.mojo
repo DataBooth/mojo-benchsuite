@@ -12,8 +12,22 @@ struct EnvironmentInfo(Copyable, Movable):
         from sys import info
         from python import Python
         
-        # Mojo version - hardcoded for now, TODO: detect from runtime
-        self.mojo_version = "0.26.1+"
+        # Get Mojo version via subprocess
+        try:
+            var subprocess = Python.import_module("subprocess")
+            var result = subprocess.run(["mojo", "--version"], 
+                                       capture_output=Python.evaluate("True"),
+                                       text=Python.evaluate("True"))
+            var output = String(result.stdout).strip()
+            # Output format: "Mojo X.Y.Z (hash)"
+            var parts = output.split()
+            if len(parts) >= 2:
+                self.mojo_version = String(parts[1])  # Extract version
+            else:
+                self.mojo_version = "unknown"
+        except:
+            # Fallback if mojo command not available
+            self.mojo_version = "unknown"
         
         # Get CPU info using Mojo's sys.info
         var cores = info.num_physical_cores()
@@ -145,20 +159,24 @@ struct BenchReport:
                   min_str.ljust(15) + " " + max_str.ljust(15) + " " + String(r.iterations))
     
     fn to_markdown(self) -> String:
-        """Export results as Markdown table."""
+        """Export results as Markdown table with total runtime column."""
         var md = String("# Benchmark Results\n\n")
         
         if self.env:
             md += "**" + self.env.value().format() + "**\n\n"
         
-        md += "| Benchmark | Mean | Min | Max | Iterations |\n"
-        md += "|-----------|------|-----|-----|------------|\n"
+        md += "| Benchmark | Mean | Min | Max | Iterations | Total (s) |\n"
+        md += "|-----------|------|-----|-----|------------|-----------|\n"
         
         for i in range(len(self.results)):
             var r = self.results[i].copy()
+            # Calculate total runtime in seconds
+            var total_secs = (r.mean_time_ns * Float64(r.iterations)) / 1_000_000_000.0
+            
             md += "| " + r.name + " | " + self._format_time(r.mean_time_ns) + " | "
             md += self._format_time(r.min_time_ns) + " | " + self._format_time(r.max_time_ns)
-            md += " | " + String(r.iterations) + " |\n"
+            md += " | " + String(r.iterations) + " | "
+            md += String(Float64(Int(total_secs * 100.0)) / 100.0) + " |\n"
         
         return md
     
