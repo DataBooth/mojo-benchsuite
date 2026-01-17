@@ -227,28 +227,33 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     for _ in range(5):
         func()
     
-    # Initial calibration: estimate iterations needed
-    var calibration_start = perf_counter()
-    func()
-    var single_duration = perf_counter() - calibration_start
-    
-    # Calculate iterations to meet minimum runtime
-    var iterations: Int
-    if single_duration < 0.000001:  # Very fast (< 1µs)
-        iterations = 1_000_000
-    elif single_duration < 0.0001:  # Fast (< 100µs)
-        iterations = Int(min_runtime_secs / single_duration)
-    elif single_duration < 0.01:    # Medium (< 10ms)
-        iterations = Int(min_runtime_secs / single_duration)
-    else:                            # Slow (> 10ms)
-        iterations = max(10, Int(min_runtime_secs / single_duration))
-    
-    # Cap at reasonable maximums
-    iterations = min(iterations, 10_000_000)
-    iterations = max(iterations, 10)  # Minimum 10 iterations
-    
-    # Run benchmark and collect timing data
+    # Adaptive iteration count: start small and increase until we hit min_runtime
+    var iterations = 10
+    var total_runtime: Float64 = 0.0
     var times = List[Float64]()
+    
+    while total_runtime < min_runtime_secs and iterations < 10_000_000:
+        times = List[Float64]()  # Reset for this batch
+        var batch_start = perf_counter()
+        
+        for _ in range(iterations):
+            var iter_start = perf_counter()
+            func()
+            var iter_duration = (perf_counter() - iter_start) * 1_000_000_000.0
+            times.append(iter_duration)
+        
+        total_runtime = perf_counter() - batch_start
+        
+        # If we haven't hit min runtime, increase iterations
+        if total_runtime < min_runtime_secs:
+            # Estimate how many more iterations we need
+            var avg_duration = total_runtime / Float64(iterations)
+            var needed_runtime = min_runtime_secs - total_runtime
+            var additional_iters = Int(needed_runtime / avg_duration)
+            
+            # Increase by at least 2x, at most 10x
+            var multiplier = min(10, max(2, additional_iters // iterations + 1))
+            iterations = iterations * multiplier
     
     for _ in range(iterations):
         var iter_start = perf_counter()
