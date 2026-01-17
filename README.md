@@ -101,17 +101,18 @@ pixi run bench-adaptive
 
 This example shows:
 - **Automatic iteration adjustment**: Fast operations run more iterations, slow operations fewer
-- **Naming convention**: Functions prefixed with `bench_*` (like `test_*` in TestSuite)
-- **Minimal boilerplate**: Just define your benchmark functions
+- **Naming convention**: `bench_*` for **FILES** (auto-discovery), normal names for functions!
+- **Minimal boilerplate**: Just define your functions and benchmark them
 
 ```mojo
 from benchsuite import auto_benchmark, BenchReport
 
-fn bench_fast_operation():
+# Functions can have any descriptive names
+fn calculate_sum():
     var x = 42.0 + 58.0
     _ = x
 
-fn bench_slow_operation():
+fn process_data():
     var sum = 0
     for i in range(10000):
         sum += i
@@ -121,32 +122,40 @@ def main():
     var report = BenchReport()
     
     # auto_benchmark figures out optimal iteration count
-    report.add_result(auto_benchmark[bench_fast_operation]("bench_fast_operation"))
-    report.add_result(auto_benchmark[bench_slow_operation]("bench_slow_operation"))
+    report.add_result(auto_benchmark[calculate_sum]("calculate_sum"))
+    report.add_result(auto_benchmark[process_data]("process_data"))
     
     report.print_console()
 ```
 
 ### Auto-Discovery
 
-Like TestSuite's `test_*` pattern, BenchSuite supports auto-discovery of `bench_*` files:
+Like TestSuite's `test_*` pattern, BenchSuite supports auto-discovery of `bench_*` **files**:
 
 ```bash
 # Benchmarks live in benchmarks/ directory (separate from src/)
 benchmarks/
-  bench_algorithms.mojo
-  bench_data_structures.mojo
-  bench_string_ops.mojo
+  bench_algorithms.mojo       # File name: bench_*
+    ├─ fn quicksort() { }     # Function name: anything!
+    ├─ fn mergesort() { }     # Function name: anything!
+    └─ fn heapsort() { }      # Function name: anything!
+  
+  bench_data_structures.mojo  # File name: bench_*
+    ├─ fn hash_table() { }    # Function name: anything!
+    └─ fn binary_tree() { }   # Function name: anything!
 
 # Run all discovered benchmarks
 pixi run bench-all
 # or: python scripts/run_benchmarks.py
 ```
 
-**Key Design**: Benchmarks are decoupled from source code:
-- `src/` contains the benchsuite framework
-- `benchmarks/` contains benchmark suites (auto-discovered)
-- `examples/` contains simple usage examples
+**Key Design**: 
+- **`bench_*` is for FILES** (auto-discovery pattern)
+- **Functions use descriptive names** (no prefix required)
+- Benchmarks are decoupled from source code:
+  - `src/` contains the benchsuite framework
+  - `benchmarks/` contains benchmark suites (auto-discovered)
+  - `examples/` contains simple usage examples
 
 The runner automatically:
 - Discovers all `bench_*.mojo` files in `benchmarks/` directory

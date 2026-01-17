@@ -6,13 +6,39 @@ from pathlib import Path
 struct EnvironmentInfo(Copyable, Movable):
     var mojo_version: String
     var os_info: String
+    var cpu_info: String
 
     fn __init__(out self):
+        from sys import info
+        from python import Python
+        
+        # Mojo version - hardcoded for now, TODO: detect from runtime
         self.mojo_version = "0.26.1+"
-        self.os_info = "detected at runtime"
+        
+        # Get CPU info using Mojo's sys.info
+        var cores = info.num_physical_cores()
+        var arch = "x86_64" if info.is_64bit() else "x86"
+        
+        # Get OS name and CPU model using Python
+        try:
+            var platform = Python.import_module("platform")
+            var system = String(platform.system())
+            var release = String(platform.release())
+            self.os_info = system + " " + release
+            
+            # Try to get processor name
+            var processor = String(platform.processor())
+            if processor != "" and processor != "unknown":
+                self.cpu_info = processor + " (" + String(cores) + " cores)"
+            else:
+                # Fallback to just core count and arch
+                self.cpu_info = String(cores) + " cores (" + arch + ")"
+        except:
+            self.os_info = "unknown"
+            self.cpu_info = String(cores) + " cores (" + arch + ")"
 
     fn format(self) -> String:
-        return "Environment: Mojo " + self.mojo_version + " | OS: " + self.os_info
+        return "Environment: Mojo " + self.mojo_version + " | OS: " + self.os_info + " | CPU: " + self.cpu_info
 
 struct BenchResult(Copyable, Movable):
     """Individual benchmark result with statistics."""
@@ -245,3 +271,48 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     var mean_ns = sum_val / Float64(len(times))
     
     return BenchResult(name, mean_ns, min_ns, max_ns, iterations)
+
+
+fn run_benchmarks(results: List[BenchResult], name: String, 
+                  save_reports: Bool = True, output_dir: String = "benchmarks/reports") raises:
+    """Simplified helper to run benchmarks and generate reports.
+    
+    This function consolidates the common pattern of:
+    1. Creating a report
+    2. Adding results  
+    3. Printing console output
+    4. Saving timestamped reports
+    
+    Args:
+        results: List of BenchResult objects from auto_benchmark calls
+        name: Name prefix for saved reports
+        save_reports: Whether to save reports to disk (default: True)
+        output_dir: Directory for saved reports (default: "benchmarks/reports")
+    
+    Example:
+        var results = List[BenchResult]()
+        results.append(auto_benchmark[bench_func1]("bench_func1"))
+        results.append(auto_benchmark[bench_func2]("bench_func2"))
+        run_benchmarks(results, "my_benchmark")
+    """
+    var report = BenchReport()
+    report.env = EnvironmentInfo()
+    
+    # Add all results
+    for i in range(len(results)):
+        report.add_result(results[i])
+    
+    # Print console output
+    report.print_console()
+    
+    # Save reports if requested
+    if save_reports:
+        print()
+        print("="  * 60)
+        print()
+        try:
+            report.save_report(output_dir, name)
+            print()
+            print("✓ Reports saved to " + output_dir + "/")
+        except:
+            print("✗ Failed to save reports")

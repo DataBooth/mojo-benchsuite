@@ -9,14 +9,14 @@ Demonstrates:
 from benchsuite import EnvironmentInfo, BenchReport, auto_benchmark
 
 
-fn bench_fast_arithmetic():
+fn add_numbers():
     """Very fast operation - framework will run many iterations."""
     var a = 42.0
     var b = 58.0
     _ = a + b
 
 
-fn bench_loop_100():
+fn sum_loop():
     """Medium-speed operation."""
     var s: Float64 = 0.0
     for i in range(100):
@@ -24,7 +24,7 @@ fn bench_loop_100():
     _ = s
 
 
-fn bench_string_ops():
+fn concat_strings():
     """String operations - slower."""
     var s = String("Hello")
     s += " "
@@ -32,7 +32,7 @@ fn bench_string_ops():
     _ = s
 
 
-fn bench_list_creation():
+fn build_list():
     """List operations."""
     var lst = List[Int]()
     for i in range(50):
@@ -53,20 +53,21 @@ def main():
     var report = BenchReport()
     report.env = EnvironmentInfo()
     
-    # Each benchmark automatically determines optimal iteration count
-    # Note: Using naming convention bench_* (like test_* in TestSuite)
+    # Each function automatically determines optimal iteration count
+    # Note: bench_* naming is for FILES (auto-discovery), not functions!
+    #       Functions can have any descriptive names
     
-    print("  [1/4] bench_fast_arithmetic...")
-    report.add_result(auto_benchmark[bench_fast_arithmetic]("bench_fast_arithmetic", 0.5))
+    print("  [1/4] add_numbers...")
+    report.add_result(auto_benchmark[add_numbers]("add_numbers", 0.5))
     
-    print("  [2/4] bench_loop_100...")
-    report.add_result(auto_benchmark[bench_loop_100]("bench_loop_100", 0.5))
+    print("  [2/4] sum_loop...")
+    report.add_result(auto_benchmark[sum_loop]("sum_loop", 0.5))
     
-    print("  [3/4] bench_string_ops...")
-    report.add_result(auto_benchmark[bench_string_ops]("bench_string_ops", 0.5))
+    print("  [3/4] concat_strings...")
+    report.add_result(auto_benchmark[concat_strings]("concat_strings", 0.5))
     
-    print("  [4/4] bench_list_creation...")
-    report.add_result(auto_benchmark[bench_list_creation]("bench_list_creation", 0.5))
+    print("  [4/4] build_list...")
+    report.add_result(auto_benchmark[build_list]("build_list", 0.5))
     
     print()
     print("=" * 60)
