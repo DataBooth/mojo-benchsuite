@@ -13,6 +13,7 @@ mojo-version = "mojo --version"
 run-example = "mojo -I src examples/simple_benches.mojo"
 bench-comprehensive = "mojo -I src benchmarks/bench_comprehensive.mojo"
 bench-adaptive = "mojo -I src benchmarks/bench_adaptive.mojo"
+bench-strings = "mojo -I src -I benchmarks benchmarks/bench_string_utils.mojo"
 bench-all = "python scripts/run_benchmarks.py"
 test = "echo 'No tests yet'"
 
