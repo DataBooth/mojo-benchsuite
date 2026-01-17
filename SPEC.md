@@ -2,54 +2,93 @@
 
 **Version**: 0.1 – Prototype  
 **Date**: January 2026  
-**Builds on**: Mojo `std.benchmark` module
+**Built with**: Mojo standard library (`time.perf_counter`, `sys.info`)
 
 ## Abstract
 
-BenchSuite adds suite-level organization, discovery, environment capture and reporting on top of the low-level `benchmark.run[]` primitive.
+BenchSuite provides suite-level organisation, auto-discovery, environment capture, adaptive iteration counting, and comprehensive reporting for Mojo benchmarks. Complements stdlib `benchmark` with higher-level conveniences.
 
-## Core API (Prototype)
+## Core API (Current Implementation)
 
 ```mojo
-from benchmark import run, Report, Unit
+from benchsuite import EnvironmentInfo, BenchResult, BenchReport, auto_benchmark
 
-struct BenchConfig:
-    var warmup_iters: Int = 5
-    var max_iters: Int = 1000
-    var min_total_time: Float = 1.0
-    var unit: String = "ms"
-    var capture_env: Bool = True
-    var export_json: Bool = False
-
+# Environment capture - auto-detects OS, CPU, Mojo version
 struct EnvironmentInfo:
-    var mojo_version: String = "unknown"
-    var os_info: String
-    var cpu_model: String = "unknown"
-    var run_timestamp: String
+    var mojo_version: String
+    var os_info: String      # e.g., "Darwin 24.6.0"
+    var cpu_info: String     # e.g., "arm (8 cores)"
+    var timestamp: String    # ISO 8601 format
 
+# Single benchmark result
+struct BenchResult:
+    var name: String
+    var mean_ns: Float64
+    var min_ns: Float64
+    var max_ns: Float64
+    var iterations: Int
+
+# Report with multiple output formats
 struct BenchReport:
-    var results: Dict[String, Report]
-    var env: EnvironmentInfo?
-    fn print(self)
-    fn to_json(self) -> String
+    var env: EnvironmentInfo
+    fn add_result(inout self, result: BenchResult)
+    fn print_console(self)                          # Console table
+    fn to_markdown(self) -> String                  # Markdown table
+    fn to_csv(self) -> String                       # CSV format
+    fn save_report(self, dir: String, prefix: String) raises  # Timestamped files
+
+# Adaptive benchmarking - auto-adjusts iterations
+fn auto_benchmark[func: fn() -> None](
+    name: String,
+    min_runtime: Float64 = 1.0  # Target min runtime in seconds
+) -> BenchResult
 ```
 
 ## Discovery
 
-```mojo
-struct BenchSuite:
-    @staticmethod
-    fn discover_from_module(fns: List[Function]) -> BenchSuite
-        # filters for names starting with "bench_"
+**File-level**: `bench_*.mojo` files in `benchmarks/` directory  
+**Function-level**: Manual registration (Mojo reflection is compile-time only)
+
+```bash
+# Auto-discover and run all bench_*.mojo files
+python scripts/run_benchmarks.py
+# or: pixi run bench-all
 ```
 
-## Next Steps / Roadmap
+## Pixi Tasks
 
-1. Improve env capture (real Mojo version, CPU model, GPU info)
-2. Add `@parametrize` support
-3. Setup/teardown hooks
-4. Baseline comparison & regression detection
-5. Parallel benchmark execution (where safe)
-6. Custom metrics (memory usage, throughput)
+```bash
+pixi run bench-adaptive       # Adaptive iteration demo
+pixi run bench-comprehensive  # Full benchmark suite
+pixi run bench-all           # Auto-discover all benchmarks
+pixi run clean-reports       # Remove all reports
+pixi run clean-md            # Remove markdown reports
+pixi run clean-csv           # Remove CSV reports
+pixi run list-reports        # List current reports
+```
 
-See `src/benchsuite.mojo` for current implementation.
+## Features Implemented
+
+✅ Suite-level organisation (group related benchmarks)  
+✅ Auto-discovery (`bench_*.mojo` files via Python script)  
+✅ Environment capture (OS, CPU cores, Mojo version, timestamp)  
+✅ Adaptive iteration counting (automatic runtime targeting)  
+✅ Multiple output formats (console, markdown, CSV)  
+✅ Statistical reporting (mean/min/max)  
+✅ Timestamped report saving  
+✅ Report cleanup tasks (clean all/md/csv)
+
+## Roadmap
+
+1. **Benchmark result caching**: JSON format with environment for baseline comparison
+2. Improve environment detection (GPU info, more detailed CPU model)
+3. `@parametrise` decorator for benchmark variants
+4. Setup/teardown hooks
+5. Regression detection (compare against cached baselines)
+6. Parallel benchmark execution (where safe)
+7. Custom metrics (memory usage, throughput)
+
+## Implementation
+
+See `src/benchsuite.mojo` for full implementation.  
+See `benchmarks/` for example benchmark suites.

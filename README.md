@@ -309,6 +309,12 @@ pixi run run-example           # Simple example
 pixi run bench-comprehensive   # Full benchmark suite
 pixi run bench-adaptive        # Adaptive iteration demo
 pixi run bench-all             # Run all benchmarks in benchmarks/
+
+# Report management
+pixi run list-reports          # List current reports
+pixi run clean-reports         # Remove all reports
+pixi run clean-md              # Remove only markdown reports
+pixi run clean-csv             # Remove only CSV reports
 ```
 
 ## Contributing
