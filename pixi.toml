@@ -11,8 +11,8 @@ env = { MOJO_PATH = "$PIXI_PROJECT_ROOT/src" }
 [tasks]
 mojo-version = "mojo --version"
 run-example = "mojo -I src examples/simple_benches.mojo"
-run-comprehensive = "mojo -I src examples/comprehensive_bench.mojo"
-run-adaptive = "mojo -I src examples/auto_adaptive.mojo"
+bench-comprehensive = "mojo -I src benchmarks/bench_comprehensive.mojo"
+bench-adaptive = "mojo -I src benchmarks/bench_adaptive.mojo"
 bench-all = "python scripts/run_benchmarks.py"
 test = "echo 'No tests yet'"
 

@@ -1,7 +1,16 @@
+# Build artifacts
 *.o
 *.dylib
 *.so
+
+# Python
 __pycache__/
+*.pyc
+*.pyo
+
+# Benchmark results (future caching feature)
+results/
+.benchmark_cache/
 # pixi environments
 .pixi/*
 !.pixi/config.toml

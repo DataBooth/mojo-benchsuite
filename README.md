@@ -11,19 +11,23 @@ A lightweight benchmarking framework for Mojo with comprehensive reporting capab
 
 **Status**: Early prototype using `time.perf_counter` for measurements.
 
-## Why not just use stdlib `benchmark`?
+## Why not (just) stdlib `benchmark`?
 
-Mojo's stdlib `benchmark` module is excellent for low-level, precise benchmarking. BenchSuite complements it by adding:
+Mojo's stdlib `benchmark` module is excellent for low-level, precise benchmarking. BenchSuite complements it by adding higher-level conveniences:
 
 **🎯 Suite-Level Organisation**
 - Group related benchmarks together
 - Auto-discovery via naming convention (`bench_*` files)
 - Run all benchmarks with a single command
+- Separate benchmark code from implementation
 
-**📊 Comprehensive Reporting**
+**📊 Comprehensive Reporting with Environment Capture**
 - Multiple output formats (console tables, markdown, CSV)
-- Statistical analysis (mean/min/max) across iterations
-- Environment capture for reproducibility
+- Statistical analysis (mean/min/max) across iterations  
+- **Automatic environment capture**: OS, Mojo version, timestamp
+- **Reproducibility**: Share results with complete context
+- **Regression detection**: Compare runs across different environments
+- Export reports for documentation or CI/CD integration
 
 **🔄 Adaptive Iteration Counts**
 - Automatically adjusts iterations to meet minimum runtime
@@ -72,12 +76,12 @@ Run with:
 pixi run run-example
 ```
 
-### Comprehensive Example
+### Comprehensive Benchmark Suite
 
-For a more realistic example with multiple benchmarks and all output formats:
+For a realistic benchmark suite with multiple benchmarks and all output formats:
 
 ```bash
-pixi run run-comprehensive
+pixi run bench-comprehensive
 ```
 
 This demonstrates:
@@ -92,7 +96,7 @@ This demonstrates:
 The framework can automatically adjust iteration counts to ensure reliable statistics:
 
 ```bash
-pixi run run-adaptive
+pixi run bench-adaptive
 ```
 
 This example shows:
@@ -128,22 +132,27 @@ def main():
 Like TestSuite's `test_*` pattern, BenchSuite supports auto-discovery of `bench_*` files:
 
 ```bash
-# Create benchmarks/ directory with bench_*.mojo files
-mkdir benchmarks
-# benchmarks/bench_algorithms.mojo
-# benchmarks/bench_data_structures.mojo
-# benchmarks/bench_string_ops.mojo
+# Benchmarks live in benchmarks/ directory (separate from src/)
+benchmarks/
+  bench_algorithms.mojo
+  bench_data_structures.mojo
+  bench_string_ops.mojo
 
 # Run all discovered benchmarks
 pixi run bench-all
 # or: python scripts/run_benchmarks.py
 ```
 
+**Key Design**: Benchmarks are decoupled from source code:
+- `src/` contains the benchsuite framework
+- `benchmarks/` contains benchmark suites (auto-discovered)
+- `examples/` contains simple usage examples
+
 The runner automatically:
 - Discovers all `bench_*.mojo` files in `benchmarks/` directory
 - Runs each benchmark suite
 - Reports success/failure for each
-- Provides a summary
+- Provides a summary with environment info
 
 ## Features
 
@@ -246,12 +255,15 @@ loop_small_100,56.79,0.056,5.6e-05,0.0,1000.0,10000
 See [SPEC.md](./SPEC.md) for detailed specification.
 
 **Next Steps**:
-1. Improve environment detection (real Mojo version, CPU model, GPU info)
-2. Add automatic benchmark discovery
+1. **Benchmark result caching**: Save results with environment info for comparison
+   - Cache format: JSON with full environment context
+   - Compare against baseline or previous runs
+   - Detect performance regressions automatically
+2. Improve environment detection (real Mojo version, CPU model, GPU info)
 3. `@parametrise` decorator for benchmark variants
 4. Setup/teardown hooks
-5. Baseline comparison & regression detection
-6. Parallel benchmark execution
+5. Baseline comparison & regression detection (integrates with caching)
+6. Parallel benchmark execution (where safe)
 7. Custom metrics (memory usage, throughput)
 
 ## Requirements
@@ -269,9 +281,11 @@ cd mojo-benchsuite
 # Install dependencies
 pixi install
 
-# Run examples
-pixi run run-example
-pixi run run-comprehensive
+# Run examples and benchmarks
+pixi run run-example           # Simple example
+pixi run bench-comprehensive   # Full benchmark suite
+pixi run bench-adaptive        # Adaptive iteration demo
+pixi run bench-all             # Run all benchmarks in benchmarks/
 ```
 
 ## Contributing

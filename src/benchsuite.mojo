@@ -185,15 +185,12 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     
     # Run benchmark and collect timing data
     var times = List[Float64]()
-    var total_start = perf_counter()
     
     for _ in range(iterations):
         var iter_start = perf_counter()
         func()
         var iter_duration = (perf_counter() - iter_start) * 1_000_000_000.0
         times.append(iter_duration)
-    
-    var total_duration = perf_counter() - total_start
     
     # Calculate statistics
     var sum_val: Float64 = 0.0
