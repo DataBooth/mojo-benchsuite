@@ -216,15 +216,34 @@ struct BenchReport:
         print("  CSV:      " + csv_filename)
     
     fn _format_time(self, ns: Float64) -> String:
-        """Format time in appropriate units."""
+        """Format time in appropriate units with 3 significant figures."""
         if ns < 1000.0:
+            # For nanoseconds, show integer
             return String(Int(ns)) + " ns"
         elif ns < 1_000_000.0:
-            return String(ns / 1000.0) + " µs"
+            # Microseconds
+            var us = ns / 1000.0
+            return self._format_number(us) + " µs"
         elif ns < 1_000_000_000.0:
-            return String(ns / 1_000_000.0) + " ms"
+            # Milliseconds
+            var ms = ns / 1_000_000.0
+            return self._format_number(ms) + " ms"
         else:
-            return String(ns / 1_000_000_000.0) + " s"
+            # Seconds
+            var s = ns / 1_000_000_000.0
+            return self._format_number(s) + " s"
+    
+    fn _format_number(self, value: Float64) -> String:
+        """Format number with 3 significant figures."""
+        if value < 10.0:
+            # e.g. 1.23, 9.87
+            return String(Float64(Int(value * 100.0)) / 100.0)
+        elif value < 100.0:
+            # e.g. 12.3, 99.8
+            return String(Float64(Int(value * 10.0)) / 10.0)
+        else:
+            # e.g. 123, 9870
+            return String(Int(value))
 
 # Note: Auto-discovery requires reflection capabilities not yet available in current Mojo
 # This is a placeholder for future implementation
