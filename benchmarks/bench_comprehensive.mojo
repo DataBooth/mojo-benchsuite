@@ -201,34 +201,17 @@ def main():
     # Console output
     report.print_console()
     
+    # Save reports to disk (markdown and CSV files)
     print()
-    print("=" * 60)
-    print("Export Options:")
-    print("=" * 60)
-    print()
-    
-    # Markdown export
-    print("Markdown format:")
-    print()
-    print(report.to_markdown())
-    
-    # CSV export
-    print()
-    print("CSV format:")
-    print()
-    print(report.to_csv())
-    
-    # Save reports to disk
-    print()
-    print("=" * 60)
-    print("Saving Reports to Disk")
     print("=" * 60)
     print()
     
     try:
         report.save_report("benchmarks/reports", "comprehensive")
         print()
-        print("✓ Reports saved successfully")
-        print("  View saved reports in: benchmarks/reports/")
+        print("✓ Benchmark complete")
+        print("  Reports saved to: benchmarks/reports/")
+        print("  - Markdown: comprehensive_*.md")
+        print("  - CSV: comprehensive_*.csv")
     except:
         print("✗ Failed to save reports")

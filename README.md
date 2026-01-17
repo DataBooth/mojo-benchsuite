@@ -284,6 +284,11 @@ See [SPEC.md](./SPEC.md) for detailed specification.
 6. Parallel benchmark execution (where safe)
 7. Custom metrics (memory usage, throughput)
 
+**Note on Auto-Discovery**: While Mojo now has reflection capabilities (`std.reflection`),
+they are compile-time only and don't support enumerating all functions in a module at runtime.
+Our approach uses Python for file discovery (`bench_*.mojo`) and manual registration in `main()`
+for function-level control. This is similar to how TestSuite works.
+
 ## Requirements
 
 - Mojo 0.26.1+ (via pixi)
