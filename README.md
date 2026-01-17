@@ -309,3 +309,86 @@ Issues and PRs welcome! Areas of particular interest:
 ## License
 
 MIT
+
+---
+
+## Appendix: BenchSuite vs TestSuite Comparison
+
+BenchSuite follows the same design philosophy as Mojo's TestSuite but adapted for performance measurement:
+
+| Aspect | TestSuite | BenchSuite |
+|--------|-----------|------------|
+| **Purpose** | Verify correctness | Measure performance |
+| **Function Naming** | `test_*` | `bench_*` |
+| **File Naming** | `test_*.mojo` | `bench_*.mojo` |
+| **Discovery** | Python script (`run_tests.py`) | Python script (`run_benchmarks.py`) |
+| **Registration** | Manual: `suite.test[func]()` | Manual + Adaptive: `auto_benchmark[func]()` |
+| **Assertions** | `assert_equal()`, `assert_true()`, etc. | Statistical measurements (mean/min/max) |
+| **Output** | Pass/Fail per test | Execution time statistics |
+| **Iteration** | Run once (or until failure) | Multiple iterations for reliability |
+| **Environment** | Not captured | **Automatically captured** (OS, version, timestamp) |
+| **Reports** | Console output | Console + Markdown + CSV + Timestamped files |
+| **Result Persistence** | Ephemeral (console only) | **Saved to disk** with timestamps |
+| **Comparison** | N/A | Future: baseline comparison |
+| **Primary Goal** | "Does it work correctly?" | "How fast is it?" |
+| **Secondary Goal** | Documentation | **Reproducibility & regression detection** |
+
+### Key Philosophical Differences
+
+**TestSuite focuses on correctness:**
+- Binary outcome: pass or fail
+- Deterministic (same inputs → same result)
+- Environment doesn't matter for correctness
+
+**BenchSuite focuses on performance:**
+- Continuous outcome: execution time
+- Non-deterministic (varies by environment, system load)
+- **Environment is critical** for interpreting results
+- Statistical analysis required (outliers, variance)
+
+### Why Environment Capture Matters for Benchmarks
+
+Unlike tests, benchmark results are meaningless without context:
+
+```markdown
+# Without environment context
+"My algorithm runs in 50ns"
+❌ Is that fast or slow?
+❌ What CPU?
+❌ What Mojo version?
+❌ Debug or release build?
+
+# With BenchSuite environment capture
+"Environment: Mojo 0.26.1+ | OS: macOS | Timestamp: 2026-01-17 14:30:22"
+"my_algorithm: 50ns (mean), 45ns (min), 120ns (max), 1M iterations"
+✅ Reproducible
+✅ Can detect regressions
+✅ Can compare across machines
+✅ Can share with confidence
+```
+
+### Usage Pattern Similarity
+
+Both follow similar discovery patterns:
+
+**TestSuite:**
+```bash
+tests/
+  test_parser.mojo
+  test_lexer.mojo
+  test_writer.mojo
+
+python scripts/run_tests.py  # Discovers all test_*.mojo
+```
+
+**BenchSuite:**
+```bash
+benchmarks/
+  bench_algorithms.mojo
+  bench_data_structures.mojo
+  bench_string_ops.mojo
+
+pixi run bench-all  # Discovers all bench_*.mojo
+```
+
+This consistency makes it easy to adopt BenchSuite if you're already familiar with TestSuite!
