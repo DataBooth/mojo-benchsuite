@@ -323,7 +323,7 @@ Issues and PRs welcome! Areas of particular interest:
 
 ## License
 
-MIT
+Apache 2.0
 
 ---
 
