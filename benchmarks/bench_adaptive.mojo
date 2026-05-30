@@ -7,6 +7,7 @@ Demonstrates:
 """
 
 from benchsuite import BenchReport
+from std.collections import List
 
 
 fn add_numbers():

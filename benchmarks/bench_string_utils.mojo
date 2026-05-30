@@ -16,7 +16,7 @@ from implementations.string_utils import (
     string_length_sum,
     build_path
 )
-from collections import List
+from std.collections import List
 
 
 # Wrapper functions for benchmarking

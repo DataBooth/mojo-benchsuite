@@ -1,7 +1,7 @@
-from benchmark import run, Report, Unit
-from collections import Dict, List
+from std.collections import List, Optional
 from time import perf_counter
-from pathlib import Path
+from sys import info
+from python import Python
 
 struct EnvironmentInfo(Copyable, Movable):
     var mojo_version: String
@@ -9,25 +9,9 @@ struct EnvironmentInfo(Copyable, Movable):
     var cpu_info: String
 
     fn __init__(out self):
-        from sys import info
-        from python import Python
-        
-        # Get Mojo version via subprocess
-        try:
-            var subprocess = Python.import_module("subprocess")
-            var result = subprocess.run(["mojo", "--version"], 
-                                       capture_output=Python.evaluate("True"),
-                                       text=Python.evaluate("True"))
-            var output = String(result.stdout).strip()
-            # Output format: "Mojo X.Y.Z (hash)"
-            var parts = output.split()
-            if len(parts) >= 2:
-                self.mojo_version = String(parts[1])  # Extract version
-            else:
-                self.mojo_version = "unknown"
-        except:
-            # Fallback if mojo command not available
-            self.mojo_version = "unknown"
+        # Runtime-safe default; avoid Python subprocess interop here because
+        # keyword-argument typing changed in newer Mojo toolchains.
+        self.mojo_version = "unknown"
         
         # Get CPU info using Mojo's sys.info
         var cores = info.num_physical_cores()

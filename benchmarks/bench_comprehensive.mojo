@@ -10,7 +10,7 @@ This example shows:
 from benchsuite import EnvironmentInfo, BenchReport, BenchResult
 from time import perf_counter
 from random import random_float64
-from collections import List
+from std.collections import List
 
 
 fn format_time(seconds: Float64) -> String:

@@ -4,7 +4,7 @@ These are actual useful functions, not artificial benchmark stubs.
 Simplified to work with current Mojo String API.
 """
 
-from collections import List
+from std.collections import List
 
 
 fn concat_many_strings(count: Int) -> String:
