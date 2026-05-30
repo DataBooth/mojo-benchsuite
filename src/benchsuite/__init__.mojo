@@ -45,18 +45,49 @@ struct BenchResult(Copyable, Movable):
     var min_time_ns: Float64
     var max_time_ns: Float64
     var iterations: Int
+    var p50_time_ns: Float64
+    var p95_time_ns: Float64
+    var p99_time_ns: Float64
+    var total_time_ns: Float64
+    var loops_per_sample: Int
     
-    fn __init__(out self, name: String, mean_time_ns: Float64, min_time_ns: Float64, 
-                max_time_ns: Float64, iterations: Int):
+    fn __init__(
+        out self,
+        name: String,
+        mean_time_ns: Float64,
+        min_time_ns: Float64,
+        max_time_ns: Float64,
+        iterations: Int,
+        p50_time_ns: Float64 = 0.0,
+        p95_time_ns: Float64 = 0.0,
+        p99_time_ns: Float64 = 0.0,
+        total_time_ns: Float64 = 0.0,
+        loops_per_sample: Int = 1,
+    ):
         self.name = name
         self.mean_time_ns = mean_time_ns
         self.min_time_ns = min_time_ns
         self.max_time_ns = max_time_ns
         self.iterations = iterations
+        self.p50_time_ns = p50_time_ns
+        self.p95_time_ns = p95_time_ns
+        self.p99_time_ns = p99_time_ns
+        self.total_time_ns = total_time_ns
+        self.loops_per_sample = loops_per_sample
     
     fn copy(self) -> Self:
-        return BenchResult(self.name, self.mean_time_ns, self.min_time_ns, 
-                          self.max_time_ns, self.iterations)
+        return BenchResult(
+            self.name,
+            self.mean_time_ns,
+            self.min_time_ns,
+            self.max_time_ns,
+            self.iterations,
+            self.p50_time_ns,
+            self.p95_time_ns,
+            self.p99_time_ns,
+            self.total_time_ns,
+            self.loops_per_sample,
+        )
 
 struct BenchReport:
     var results: List[BenchResult]
@@ -111,41 +142,59 @@ struct BenchReport:
         if len(self.results) == 1:
             # First result - print header
             print(self.env.value().format())
-            print("────────────────────────────────────────────────────────────────────────────")
-            print("Benchmark                    Mean            Min             Max         Iterations  Total (s)")
-            print("────────────────────────────────────────────────────────────────────────────")
+            print("────────────────────────────────────────────────────────────────────────────────────────────────────────────")
+            print("Benchmark                    Mean        P50         P95         P99         Min         Max         Iterations  Total (s)")
+            print("────────────────────────────────────────────────────────────────────────────────────────────────────────────")
         
         var mean_str = self._format_time(result.mean_time_ns)
+        var p50_ns = result.p50_time_ns if result.p50_time_ns > 0.0 else result.mean_time_ns
+        var p95_ns = result.p95_time_ns if result.p95_time_ns > 0.0 else result.max_time_ns
+        var p99_ns = result.p99_time_ns if result.p99_time_ns > 0.0 else result.max_time_ns
+        var p50_str = self._format_time(p50_ns)
+        var p95_str = self._format_time(p95_ns)
+        var p99_str = self._format_time(p99_ns)
         var min_str = self._format_time(result.min_time_ns)
         var max_str = self._format_time(result.max_time_ns)
-        var total_secs = (result.mean_time_ns * Float64(result.iterations)) / 1_000_000_000.0
+        var total_time_ns = result.total_time_ns if result.total_time_ns > 0.0 else result.mean_time_ns * Float64(result.iterations)
+        var total_secs = total_time_ns / 1_000_000_000.0
         var total_str = String(Float64(Int(total_secs * 100.0)) / 100.0)
         
-        print(result.name.ljust(28) + " " + mean_str.ljust(15) + " " + 
-              min_str.ljust(15) + " " + max_str.ljust(15) + " " + 
+        print(result.name.ljust(28) + " " + mean_str.ljust(11) + " " +
+              p50_str.ljust(11) + " " + p95_str.ljust(11) + " " +
+              p99_str.ljust(11) + " " + min_str.ljust(11) + " " +
+              max_str.ljust(11) + " " +
               String(result.iterations).ljust(11) + " " + total_str)
 
     fn print_console(self):
         """Print results in human-readable console format."""
         if self.env:
             print(self.env.value().format())
-        print("────────────────────────────────────────────────────────────────────────────")
+        print("────────────────────────────────────────────────────────────────────────────────────────────────────────────")
         print("Benchmark Results")
-        print("────────────────────────────────────────────────────────────────────────────")
+        print("────────────────────────────────────────────────────────────────────────────────────────────────────────────")
         print()
-        print("Benchmark                    Mean            Min             Max         Iterations  Total (s)")
-        print("────────────────────────────────────────────────────────────────────────────")
+        print("Benchmark                    Mean        P50         P95         P99         Min         Max         Iterations  Total (s)")
+        print("────────────────────────────────────────────────────────────────────────────────────────────────────────────")
         
         for i in range(len(self.results)):
             var r = self.results[i].copy()
             var mean_str = self._format_time(r.mean_time_ns)
+            var p50_ns = r.p50_time_ns if r.p50_time_ns > 0.0 else r.mean_time_ns
+            var p95_ns = r.p95_time_ns if r.p95_time_ns > 0.0 else r.max_time_ns
+            var p99_ns = r.p99_time_ns if r.p99_time_ns > 0.0 else r.max_time_ns
+            var p50_str = self._format_time(p50_ns)
+            var p95_str = self._format_time(p95_ns)
+            var p99_str = self._format_time(p99_ns)
             var min_str = self._format_time(r.min_time_ns)
             var max_str = self._format_time(r.max_time_ns)
-            var total_secs = (r.mean_time_ns * Float64(r.iterations)) / 1_000_000_000.0
+            var total_time_ns = r.total_time_ns if r.total_time_ns > 0.0 else r.mean_time_ns * Float64(r.iterations)
+            var total_secs = total_time_ns / 1_000_000_000.0
             var total_str = String(Float64(Int(total_secs * 100.0)) / 100.0)
             
-            print(r.name.ljust(28) + " " + mean_str.ljust(15) + " " + 
-                  min_str.ljust(15) + " " + max_str.ljust(15) + " " + 
+            print(r.name.ljust(28) + " " + mean_str.ljust(11) + " " +
+                  p50_str.ljust(11) + " " + p95_str.ljust(11) + " " +
+                  p99_str.ljust(11) + " " + min_str.ljust(11) + " " +
+                  max_str.ljust(11) + " " +
                   String(r.iterations).ljust(11) + " " + total_str)
     
     fn to_markdown(self) -> String:
@@ -155,34 +204,50 @@ struct BenchReport:
         if self.env:
             md += "**" + self.env.value().format() + "**\n\n"
         
-        md += "| Benchmark | Mean | Min | Max | Iterations | Total (s) |\n"
-        md += "|-----------|------|-----|-----|------------|-----------|\n"
+        md += "| Benchmark | Mean | P50 | P95 | P99 | Min | Max | Iterations | Loops/Sample | Total (s) |\n"
+        md += "|-----------|------|-----|-----|-----|-----|-----|------------|--------------|-----------|\n"
         
         for i in range(len(self.results)):
             var r = self.results[i].copy()
-            # Calculate total runtime in seconds
-            var total_secs = (r.mean_time_ns * Float64(r.iterations)) / 1_000_000_000.0
+            var p50_ns = r.p50_time_ns if r.p50_time_ns > 0.0 else r.mean_time_ns
+            var p95_ns = r.p95_time_ns if r.p95_time_ns > 0.0 else r.max_time_ns
+            var p99_ns = r.p99_time_ns if r.p99_time_ns > 0.0 else r.max_time_ns
+            var total_time_ns = r.total_time_ns if r.total_time_ns > 0.0 else r.mean_time_ns * Float64(r.iterations)
+            var total_secs = total_time_ns / 1_000_000_000.0
             
             md += "| " + r.name + " | " + self._format_time(r.mean_time_ns) + " | "
-            md += self._format_time(r.min_time_ns) + " | " + self._format_time(r.max_time_ns)
+            md += self._format_time(p50_ns) + " | " + self._format_time(p95_ns) + " | "
+            md += self._format_time(p99_ns) + " | " + self._format_time(r.min_time_ns) + " | "
+            md += self._format_time(r.max_time_ns)
             md += " | " + String(r.iterations) + " | "
+            md += String(r.loops_per_sample) + " | "
             md += String(Float64(Int(total_secs * 100.0)) / 100.0) + " |\n"
         
         return md
     
     fn to_csv(self) -> String:
         """Export results as CSV."""
-        var csv = String("benchmark,mean_ns,mean_us,mean_ms,min_ns,max_ns,iterations\n")
+        var csv = String("benchmark,mean_ns,p50_ns,p95_ns,p99_ns,mean_us,mean_ms,min_ns,max_ns,iterations,loops_per_sample,total_time_ns,total_time_s\n")
         
         for i in range(len(self.results)):
             var r = self.results[i].copy()
+            var p50_ns = r.p50_time_ns if r.p50_time_ns > 0.0 else r.mean_time_ns
+            var p95_ns = r.p95_time_ns if r.p95_time_ns > 0.0 else r.max_time_ns
+            var p99_ns = r.p99_time_ns if r.p99_time_ns > 0.0 else r.max_time_ns
+            var total_time_ns = r.total_time_ns if r.total_time_ns > 0.0 else r.mean_time_ns * Float64(r.iterations)
             csv += r.name + ","
             csv += String(r.mean_time_ns) + ","
+            csv += String(p50_ns) + ","
+            csv += String(p95_ns) + ","
+            csv += String(p99_ns) + ","
             csv += String(r.mean_time_ns / 1000.0) + ","
             csv += String(r.mean_time_ns / 1_000_000.0) + ","
             csv += String(r.min_time_ns) + ","
             csv += String(r.max_time_ns) + ","
-            csv += String(r.iterations) + "\n"
+            csv += String(r.iterations) + ","
+            csv += String(r.loops_per_sample) + ","
+            csv += String(total_time_ns) + ","
+            csv += String(total_time_ns / 1_000_000_000.0) + "\n"
         
         return csv
     
@@ -288,13 +353,43 @@ struct BenchConfig:
         self.capture_env = capture_env
         self.export_json = export_json
 
+fn _copy_samples(values: List[Float64]) -> List[Float64]:
+    var copied = List[Float64]()
+    for i in range(len(values)):
+        copied.append(values[i])
+    return copied^
+
+fn _insertion_sort(mut values: List[Float64]):
+    if len(values) < 2:
+        return
+    for i in range(1, len(values)):
+        var key = values[i]
+        var j = i - 1
+        while j >= 0 and values[j] > key:
+            values[j + 1] = values[j]
+            j -= 1
+        values[j + 1] = key
+
+fn _percentile_from_sorted(values: List[Float64], percentile: Float64) -> Float64:
+    if len(values) == 0:
+        return 0.0
+    if len(values) == 1:
+        return values[0]
+
+    var p = percentile
+    if p < 0.0:
+        p = 0.0
+    elif p > 1.0:
+        p = 1.0
+
+    var idx = Int(p * Float64(len(values) - 1))
+    return values[idx]
 
 fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 1.0) -> BenchResult:
     """Automatically run benchmark with adaptive iteration count.
     
-    Runs the benchmark function multiple times, automatically adjusting the
-    iteration count to meet a minimum runtime target. This ensures statistical
-    reliability for both fast and slow operations.
+    Runs calibrated batches to reduce timer noise for very fast functions, while
+    still reporting per-operation timing metrics.
     
     Args:
         name: Name of the benchmark
@@ -303,59 +398,88 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     Returns:
         BenchResult with statistics
     """
-    # Warm-up: run a few times to prime caches
+    # Warm-up to reduce first-run effects.
     for _ in range(5):
         func()
-    
-    # Adaptive iteration count: start small and increase until we hit min_runtime
-    var iterations = 10
-    var total_runtime: Float64 = 0.0
-    var times = List[Float64]()
-    
-    while total_runtime < min_runtime_secs and iterations < 10_000_000:
-        times = List[Float64]()  # Reset for this batch
-        var batch_start = perf_counter()
-        
-        for _ in range(iterations):
-            var iter_start = perf_counter()
+
+    # Calibrate loops per sample so each measured sample has enough duration
+    # to reduce timer resolution noise.
+    var loops_per_sample = 1
+    var calibration_target_secs = 0.02
+    while loops_per_sample < 10_000_000:
+        var calibration_start = perf_counter()
+        for _ in range(loops_per_sample):
             func()
-            var iter_duration = (perf_counter() - iter_start) * 1_000_000_000.0
-            times.append(iter_duration)
-        
-        total_runtime = perf_counter() - batch_start
-        
-        # If we haven't hit min runtime, increase iterations
-        if total_runtime < min_runtime_secs:
-            # Estimate how many more iterations we need
-            var avg_duration = total_runtime / Float64(iterations)
-            var needed_runtime = min_runtime_secs - total_runtime
-            var additional_iters = Int(needed_runtime / avg_duration)
-            
-            # Increase by at least 2x, at most 10x
-            var multiplier = min(10, max(2, additional_iters // iterations + 1))
-            iterations = iterations * multiplier
-    
-    for _ in range(iterations):
-        var iter_start = perf_counter()
-        func()
-        var iter_duration = (perf_counter() - iter_start) * 1_000_000_000.0
-        times.append(iter_duration)
-    
-    # Calculate statistics
+        var calibration_elapsed = perf_counter() - calibration_start
+
+        if calibration_elapsed >= calibration_target_secs:
+            break
+
+        if calibration_elapsed <= 0.0:
+            loops_per_sample *= 10
+            continue
+
+        var scale = Int(calibration_target_secs / calibration_elapsed) + 1
+        if scale < 2:
+            scale = 2
+        elif scale > 10:
+            scale = 10
+        loops_per_sample *= scale
+
+    # Gather samples until both minimum sample count and runtime target are met.
+    var min_samples = 20
+    var max_samples = 500
+    var times = List[Float64]()  # per-operation ns samples
+    var total_time_ns: Float64 = 0.0
+    var target_time_ns = min_runtime_secs * 1_000_000_000.0
+
+    while len(times) < max_samples:
+        var sample_start = perf_counter()
+        for _ in range(loops_per_sample):
+            func()
+        var sample_elapsed_ns = (perf_counter() - sample_start) * 1_000_000_000.0
+        total_time_ns += sample_elapsed_ns
+
+        var per_operation_ns = sample_elapsed_ns / Float64(loops_per_sample)
+        times.append(per_operation_ns)
+
+        if len(times) >= min_samples and total_time_ns >= target_time_ns:
+            break
+
+    if len(times) == 0:
+        return BenchResult(name, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0, 0.0, loops_per_sample)
+
     var sum_val: Float64 = 0.0
     var min_ns = times[0]
     var max_ns = times[0]
-    
     for i in range(len(times)):
-        sum_val += times[i]
-        if times[i] < min_ns:
-            min_ns = times[i]
-        if times[i] > max_ns:
-            max_ns = times[i]
-    
+        var sample_ns = times[i]
+        sum_val += sample_ns
+        if sample_ns < min_ns:
+            min_ns = sample_ns
+        if sample_ns > max_ns:
+            max_ns = sample_ns
+
     var mean_ns = sum_val / Float64(len(times))
-    
-    return BenchResult(name, mean_ns, min_ns, max_ns, iterations)
+    var sorted_times = _copy_samples(times)
+    _insertion_sort(sorted_times)
+    var p50_ns = _percentile_from_sorted(sorted_times, 0.50)
+    var p95_ns = _percentile_from_sorted(sorted_times, 0.95)
+    var p99_ns = _percentile_from_sorted(sorted_times, 0.99)
+    var iterations = len(times) * loops_per_sample
+
+    return BenchResult(
+        name,
+        mean_ns,
+        min_ns,
+        max_ns,
+        iterations,
+        p50_ns,
+        p95_ns,
+        p99_ns,
+        total_time_ns,
+        loops_per_sample,
+    )
 
 
 fn run_benchmarks(results: List[BenchResult], name: String, 
@@ -385,7 +509,7 @@ fn run_benchmarks(results: List[BenchResult], name: String,
     
     # Add all results
     for i in range(len(results)):
-        report.add_result(results[i])
+        report.add_result(results[i].copy())
     
     # Print console output
     report.print_console()

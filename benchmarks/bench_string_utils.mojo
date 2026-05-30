@@ -7,8 +7,7 @@ This demonstrates the proper separation:
 The implementations are real, reusable code.
 The benchmark just measures their performance.
 """
-
-from benchsuite import EnvironmentInfo, BenchReport, BenchResult, auto_benchmark
+from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from implementations.string_utils import (
     concat_many_strings,
     build_csv_line,
@@ -63,45 +62,10 @@ def main():
     print("=" * 60)
     print()
     
-    var report = BenchReport()
-    report.env = EnvironmentInfo()
-    
-    print("Running benchmarks...")
-    print()
-    
-    print("  [1/5] Benchmarking concat_many_strings...")
-    report.add_result(auto_benchmark[bench_concat_strings]("concat_many_strings", 0.5))
-    
-    print("  [2/5] Benchmarking build_csv_line...")
-    report.add_result(auto_benchmark[bench_csv_line]("build_csv_line", 0.5))
-    
-    print("  [3/5] Benchmarking repeat_string...")
-    report.add_result(auto_benchmark[bench_repeat]("repeat_string", 0.5))
-    
-    print("  [4/5] Benchmarking string_length_sum...")
-    report.add_result(auto_benchmark[bench_length_sum]("string_length_sum", 0.5))
-    
-    print("  [5/5] Benchmarking build_path...")
-    report.add_result(auto_benchmark[bench_path_join]("build_path", 0.5))
-    
-    print()
-    print("=" * 60)
-    print()
-    
-    # Display results
-    report.print_console()
-    
-    # Save reports
-    print()
-    print("=" * 60)
-    print()
-    
-    try:
-        report.save_report("benchmarks/reports", "string_utils")
-        print()
-        print("✓ Benchmark complete - reports saved to benchmarks/reports/")
-        print()
-        print("These implementations can be used in your projects!")
-        print("See: benchmarks/implementations/string_utils.mojo")
-    except:
-        print("✗ Note: Could not save reports to disk")
+    var results = List[BenchResult]()
+    results.append(auto_benchmark[bench_concat_strings]("concat_many_strings", 0.5))
+    results.append(auto_benchmark[bench_csv_line]("build_csv_line", 0.5))
+    results.append(auto_benchmark[bench_repeat]("repeat_string", 0.5))
+    results.append(auto_benchmark[bench_length_sum]("string_length_sum", 0.5))
+    results.append(auto_benchmark[bench_path_join]("build_path", 0.5))
+    run_benchmarks(results, "string_utils")

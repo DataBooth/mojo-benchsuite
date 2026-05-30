@@ -14,12 +14,21 @@ mojo-version = "mojo --version"
 
 # Examples
 run-example = "mojo -I src examples/simple_benches.mojo"
+run-example-complex = "mojo -I src examples/complex_pipeline_benches.mojo"
+run-example-startup = "mojo -I src examples/service_startup_benches.mojo"
+run-example-gpu = "mojo -I src examples/gpu_vector_add_benches.mojo"
 
 # Benchmarks
 bench-comprehensive = "mojo -I src benchmarks/bench_comprehensive.mojo"
 bench-adaptive = "mojo -I src benchmarks/bench_adaptive.mojo"
 bench-strings = "mojo -I src -I benchmarks benchmarks/bench_string_utils.mojo"
+bench-config = "mojo -I src benchmarks/bench_config_workloads.mojo"
+bench-data-transform = "mojo -I src benchmarks/bench_data_transform.mojo"
+bench-startup = "mojo -I src benchmarks/bench_startup_costs.mojo"
 bench-all = "python scripts/run_benchmarks.py"
+bench-summary = "python scripts/run_benchmarks.py --summary-json benchmarks/reports/summary.json"
+bench-save-baseline = "python scripts/run_benchmarks.py --summary-json benchmarks/reports/summary.json --save-baseline local"
+bench-compare-baseline = "python scripts/run_benchmarks.py --summary-json benchmarks/reports/summary.json --compare-baseline local --regression-threshold-percent 5.0"
 
 # Report cleanup
 clean-reports = "rm -f benchmarks/reports/*.md benchmarks/reports/*.csv"

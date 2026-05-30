@@ -1,56 +1,24 @@
-"""Simple benchmark example for mojo-benchsuite.
+"""Simple BenchSuite example with the current reporting API."""
 
-Demonstrates basic benchmarking capabilities with environment capture.
-"""
+from benchsuite import BenchResult, auto_benchmark, run_benchmarks
+from std.collections import List
 
-from benchsuite import EnvironmentInfo
-from time import perf_counter
-from random import random_float64
 
-fn format_time(seconds: Float64) -> String:
-    """Format time in appropriate units."""
-    if seconds < 0.001:
-        return String(Int(seconds * 1_000_000)) + " µs"
-    elif seconds < 1.0:
-        return String(Int(seconds * 1_000)) + " ms"
-    else:
-        return String(seconds) + " s"
+fn bench_add():
+    var a = 42.0
+    var b = 58.0
+    _ = a + b
 
-fn bench_add() -> Float64:
-    """Benchmark simple addition."""
-    var iterations = 10_000
-    var start = perf_counter()
-    
-    for i in range(iterations):
-        var a = 42.0
-        var b = random_float64(0, 100)
-        _ = a + b
-    
-    return (perf_counter() - start) / Float64(iterations)
 
-fn bench_loop_1k() -> Float64:
-    """Benchmark 1000 iteration loop."""
-    var iterations = 1_000
-    var start = perf_counter()
-    
-    for _ in range(iterations):
-        var s: Float64 = 0.0
-        for i in range(1000):
-            s += Float64(i) * 0.001
-        _ = s
-    
-    return (perf_counter() - start) / Float64(iterations)
+fn bench_loop_1k():
+    var s: Float64 = 0.0
+    for i in range(1000):
+        s += Float64(i) * 0.001
+    _ = s
+
 
 def main():
-    print("Mojo BenchSuite Example")
-    var env = EnvironmentInfo()
-    print(env.format())
-    print("───────────────────────────────────────────────")
-    print("\nRunning benchmarks...\n")
-    
-    # Run benchmarks
-    var add_time = bench_add()
-    print("bench_add: " + format_time(add_time) + " per operation")
-    
-    var loop_time = bench_loop_1k()
-    print("bench_loop_1k: " + format_time(loop_time) + " per iteration")
+    var results = List[BenchResult]()
+    results.append(auto_benchmark[bench_add]("bench_add", 0.3))
+    results.append(auto_benchmark[bench_loop_1k]("bench_loop_1k", 0.3))
+    run_benchmarks(results, "example_simple")

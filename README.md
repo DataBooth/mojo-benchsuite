@@ -1,409 +1,151 @@
 # Mojo BenchSuite 🔥
 
-A lightweight benchmarking framework for Mojo with comprehensive reporting capabilities.
+Lightweight benchmark orchestration for Mojo projects with practical suite structure, richer statistics, and CI-friendly reporting.
 
-**Goals**:
-- Simple, low-boilerplate benchmark creation
-- Reproducible results via environment capture
-- Multiple output formats (console, markdown, CSV)
-- Statistical reporting (mean, min, max)
-- Future: Auto-discovery, parameterisation, baseline comparison
+BenchSuite complements Mojo stdlib `benchmark` by focusing on suite-level workflow:
+- `bench_*.mojo` file discovery
+- multi-benchmark suite execution
+- environment-aware report output
+- baseline save/compare flow for regression tracking
 
-**Status**: Early prototype using `time.perf_counter` for measurements.
+## What is implemented
 
-## Why not (just) stdlib `benchmark`?
+### Core measurement and reporting
+- Adaptive benchmarking with calibration and batched sampling (`auto_benchmark`)
+- Percentile statistics: p50, p95, p99 (plus mean/min/max)
+- Total runtime and loops-per-sample accounting
+- Console, Markdown, and CSV report exports
+- Timestamped report persistence under `benchmarks/reports/`
 
-Mojo's stdlib `benchmark` module is excellent for low-level, precise benchmarking. BenchSuite complements it by adding higher-level conveniences:
+### Runner and CI workflow
+- Benchmark discovery via `scripts/run_benchmarks.py`
+- Filters:
+  - `--only <glob>`
+  - `--skip <glob>`
+- Baseline operations:
+  - `--save-baseline <name>`
+  - `--compare-baseline <name>`
+  - `--regression-threshold-percent <float>`
+  - `--fail-on-regression`
+- Machine-readable output:
+  - `--summary-json <path>`
+- GitHub Actions benchmark workflow:
+  - `.github/workflows/benchmarks.yml`
+  - summary + report artefact upload
+  - report mode or enforce mode for regression gating
 
-**🎯 Suite-Level Organisation**
-- Group related benchmarks together
-- Auto-discovery via naming convention (`bench_*` files)
-- Run all benchmarks with a single command
-- Separate benchmark code from implementation
+### Practical benchmark suites
+- `benchmarks/bench_adaptive.mojo`
+- `benchmarks/bench_comprehensive.mojo`
+- `benchmarks/bench_string_utils.mojo`
+- `benchmarks/bench_config_workloads.mojo`
+- `benchmarks/bench_data_transform.mojo`
+- `benchmarks/bench_startup_costs.mojo`
 
-**📊 Comprehensive Reporting with Environment Capture**
-- Multiple output formats (console tables, markdown, CSV)
-- Statistical analysis (mean/min/max) across iterations  
-- **Automatic environment capture**: OS, Mojo version, timestamp
-- **Reproducibility**: Share results with complete context
-- **Regression detection**: Compare runs across different environments
-- Export reports for documentation or CI/CD integration
+## Quick start
 
-**🔄 Adaptive Iteration Counts**
-- Automatically adjusts iterations to meet minimum runtime
-- Ensures reliable statistics for both fast and slow operations
-- No manual tuning required
-
-**💡 Lower Boilerplate**
-- Simple function definitions
-- Automatic statistics collection
-- Ready-to-share reports
-
-Think of it as the relationship between Python's `unittest` (low-level) and `pytest` (high-level convenience). Both have their place!
-
-## Quick Start
-
-### Simple Example
-
-See `examples/simple_benches.mojo`:
-
-```mojo
-from benchsuite import EnvironmentInfo, BenchReport, BenchResult
-from time import perf_counter
-
-fn bench_add() -> BenchResult:
-    var iterations = 10_000
-    var start = perf_counter()
-    
-    for _ in range(iterations):
-        var a = 42.0
-        var b = 58.0
-        _ = a + b
-    
-    var mean_ns = ((perf_counter() - start) / Float64(iterations)) * 1_000_000_000.0
-    return BenchResult("bench_add", mean_ns, mean_ns, mean_ns, iterations)
-
-def main():
-    var report = BenchReport()
-    report.env = EnvironmentInfo()
-    report.add_result(bench_add())
-    report.print_console()
+```bash
+pixi install
+pixi run bench-all
 ```
 
-Run with:
+Run examples:
 
 ```bash
 pixi run run-example
+pixi run run-example-complex
+pixi run run-example-startup
+pixi run run-example-gpu
 ```
 
-### Comprehensive Benchmark Suite
-
-For a realistic benchmark suite with multiple benchmarks and all output formats:
+Run a single benchmark suite:
 
 ```bash
-pixi run bench-comprehensive
+pixi run bench-startup
 ```
 
-This demonstrates:
-- Multiple benchmark functions
-- Statistical analysis (mean, min, max)
-- Console output with formatted tables
-- Markdown export for documentation
-- CSV export for analysis
-
-### Auto-Adaptive Benchmarking
-
-The framework can automatically adjust iteration counts to ensure reliable statistics:
+Run with summary output:
 
 ```bash
-pixi run bench-adaptive
+pixi run bench-summary
 ```
 
-This example shows:
-- **Automatic iteration adjustment**: Fast operations run more iterations, slow operations fewer
-- **Naming convention**: `bench_*` for **FILES** (auto-discovery), normal names for functions!
-- **Minimal boilerplate**: Just define your functions and benchmark them
-
-```mojo
-from benchsuite import BenchReport
-
-# Functions can have any descriptive names
-fn calculate_sum():
-    var x = 42.0 + 58.0
-    _ = x
-
-fn process_data():
-    var sum = 0
-    for i in range(10000):
-        sum += i
-    _ = sum
-
-def main():
-    var report = BenchReport()  # Auto-prints results by default
-    
-    # Benchmark and print results automatically
-    report.benchmark[calculate_sum]("calculate_sum")
-    report.benchmark[process_data]("process_data")
-```
-
-### Auto-Discovery
-
-Like TestSuite's `test_*` pattern, BenchSuite supports auto-discovery of `bench_*` **files**:
+Save baseline snapshot:
 
 ```bash
-# Benchmarks live in benchmarks/ directory (separate from src/)
-benchmarks/
-  bench_algorithms.mojo       # File name: bench_*
-    ├─ fn quicksort() { }     # Function name: anything!
-    ├─ fn mergesort() { }     # Function name: anything!
-    └─ fn heapsort() { }      # Function name: anything!
-  
-  bench_data_structures.mojo  # File name: bench_*
-    ├─ fn hash_table() { }    # Function name: anything!
-    └─ fn binary_tree() { }   # Function name: anything!
-
-# Run all discovered benchmarks
-pixi run bench-all
-# or: python scripts/run_benchmarks.py
+pixi run bench-save-baseline
 ```
 
-**Key Design**: 
-- **`bench_*` is for FILES** (auto-discovery pattern)
-- **Functions use descriptive names** (no prefix required)
-- Benchmarks are decoupled from source code:
-  - `src/` contains the benchsuite framework
-  - `benchmarks/` contains benchmark suites (auto-discovered)
-  - `examples/` contains simple usage examples
+Compare against baseline:
 
-The runner automatically:
-- Discovers all `bench_*.mojo` files in `benchmarks/` directory
-- Runs each benchmark suite
-- Reports success/failure for each
-- Provides a summary with environment info
-
-## Features
-
-✅ **Multiple Output Formats**
-- Console: Human-readable tables with formatted timing
-- Markdown: Ready for documentation/reports
-- CSV: For spreadsheet analysis or plotting
-- **Timestamped file saving**: Automatically save reports to `benchmarks/reports/`
-
-✅ **Statistical Reporting**
-- Mean, minimum, and maximum execution times
-- Iteration counts
-- Automatic unit formatting (ns, µs, ms, s)
-
-✅ **Environment Capture**
-- Mojo version
-- Operating system
-- Extensible for CPU/GPU info
-
-✅ **Adaptive Iteration Counts**
-- Automatically adjusts based on operation speed
-- Ensures minimum runtime for reliable statistics
-- No manual tuning required
-
-✅ **Auto-Discovery**
-- `bench_*` naming convention (like `test_*` in TestSuite)
-- Python script for running all benchmarks
-- Organise benchmarks by topic
-
-## Usage
-
-### Creating Benchmarks
-
-```mojo
-fn bench_my_operation() -> BenchResult:
-    var iterations = 1_000
-    var times = List[Float64]()
-    
-    for _ in range(iterations):
-        var start = perf_counter()
-        # ... your code to benchmark ...
-        times.append((perf_counter() - start) * 1_000_000_000.0)
-    
-    var mean_ns = calculate_mean(times)
-    var min_ns = find_min(times)
-    var max_ns = find_max(times)
-    
-    return BenchResult("my_operation", mean_ns, min_ns, max_ns, iterations)
+```bash
+pixi run bench-compare-baseline
 ```
 
-### Generating Reports
+Direct runner usage:
 
-```mojo
-# Default: auto-print results
-var report = BenchReport()
-report.benchmark[my_function]("my_function")
-
-# With auto-save enabled
-var report = BenchReport(auto_save=True, name_prefix="my_benchmark")
-report.benchmark[my_function]("my_function")  # Auto-saves timestamped reports
-
-# Manual control
-var report = BenchReport(auto_print=False)
-report.benchmark[func1]("func1")
-report.benchmark[func2]("func2")
-report.print_console()  # Print all at once
-report.save_report("benchmarks/reports", "my_benchmark")  # Manual save
-
-# Export to strings
-print(report.to_markdown())
-print(report.to_csv())
+```bash
+python3 scripts/run_benchmarks.py --only "bench_startup_*" --summary-json benchmarks/reports/summary.json
+python3 scripts/run_benchmarks.py --compare-baseline main --regression-threshold-percent 5.0
 ```
 
-## Output Examples
+## Pixi tasks
 
-### Console
-```
-Environment: Mojo 0.26.1+ | OS: detected at runtime
-────────────────────────────────────────────────────────────
-Benchmark Results
-────────────────────────────────────────────────────────────
+- `run-example`
+- `run-example-complex`
+- `run-example-startup`
+- `run-example-gpu`
+- `bench-adaptive`
+- `bench-comprehensive`
+- `bench-strings`
+- `bench-config`
+- `bench-data-transform`
+- `bench-startup`
+- `bench-all`
+- `bench-summary`
+- `bench-save-baseline`
+- `bench-compare-baseline`
+- `clean-reports`
+- `clean-md`
+- `clean-csv`
+- `list-reports`
 
-Benchmark                    Mean            Min             Max         Iterations
-────────────────────────────────────────────────────────────
-simple_arithmetic            86 ns           0 ns            42.99 µs    100000
-loop_small_100               56 ns           0 ns            1.00 µs     10000
-```
+## Documentation
 
-### Markdown
-```markdown
-| Benchmark | Mean | Min | Max | Iterations |
-|-----------|------|-----|-----|------------|
-| simple_arithmetic | 86 ns | 0 ns | 42.99 µs | 100000 |
-| loop_small_100 | 56 ns | 0 ns | 1.00 µs | 10000 |
-```
+- `docs/QUICKSTART.md`
+- `docs/RELEASE_NOTES.md`
+- `docs/EXAMPLES.md`
+- `docs/ROADMAP.md`
 
-### CSV
-```csv
-benchmark,mean_ns,mean_us,mean_ms,min_ns,max_ns,iterations
-simple_arithmetic,86.67,0.086,8.6e-05,0.0,42999.9,100000
-loop_small_100,56.79,0.056,5.6e-05,0.0,1000.0,10000
-```
+## Output files
 
-## Roadmap
+### Per-suite reports
+- `benchmarks/reports/<suite>_<timestamp>.md`
+- `benchmarks/reports/<suite>_<timestamp>.csv`
 
-See [SPEC.md](./SPEC.md) for detailed specification.
+### Summary JSON
+- configured by `--summary-json`
+- includes suite failures, parsed result rows, and optional baseline comparison
 
-**Next Steps**:
-1. **Benchmark result caching**: Save results with environment info for comparison
-   - Cache format: JSON with full environment context
-   - Compare against baseline or previous runs
-   - Detect performance regressions automatically
-2. Improve environment detection (real Mojo version, CPU model, GPU info)
-3. `@parametrise` decorator for benchmark variants
-4. Setup/teardown hooks
-5. Baseline comparison & regression detection (integrates with caching)
-6. Parallel benchmark execution (where safe)
-7. Custom metrics (memory usage, throughput)
+### Baselines
+- stored at `benchmarks/baselines/<name>.json`
+- created via `--save-baseline`
 
-**Note on Auto-Discovery**: While Mojo now has reflection capabilities (`std.reflection`),
-they are compile-time only and don't support enumerating all functions in a module at runtime.
-Our approach uses Python for file discovery (`bench_*.mojo`) and manual registration in `main()`
-for function-level control. This is similar to how TestSuite works.
+## TestSuite alignment
+
+BenchSuite mirrors TestSuite’s pragmatic discovery model:
+- discover files by naming pattern (`bench_*.mojo`)
+- keep benchmark registration explicit inside each suite’s `main()`
+- avoid overpromising runtime reflection-based auto-registration
+
+This keeps behaviour explicit, stable, and easy to reason about in CI.
 
 ## Requirements
 
-- Mojo 0.26.1+ (via pixi)
-- pixi for dependency management
-
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/DataBooth/mojo-benchsuite.git
-cd mojo-benchsuite
-
-# Install dependencies
-pixi install
-
-# Run examples and benchmarks
-pixi run run-example           # Simple example
-pixi run bench-comprehensive   # Full benchmark suite
-pixi run bench-adaptive        # Adaptive iteration demo
-pixi run bench-all             # Run all benchmarks in benchmarks/
-
-# Report management
-pixi run list-reports          # List current reports
-pixi run clean-reports         # Remove all reports
-pixi run clean-md              # Remove only markdown reports
-pixi run clean-csv             # Remove only CSV reports
-```
-
-## Contributing
-
-Issues and PRs welcome! Areas of particular interest:
-- Better environment detection (GPU, real Mojo version, etc.)
-- Automatic benchmark discovery
-- Statistical analysis improvements
-- Additional export formats (JSON, HTML)
-- Performance optimisations
+- Mojo via pixi
+- Python 3 for runner orchestration
+- compatible GPU development environment for `run-example-gpu`
 
 ## License
 
 Apache 2.0
-
----
-
-## Appendix: BenchSuite vs TestSuite Comparison
-
-BenchSuite follows the same design philosophy as Mojo's TestSuite but adapted for performance measurement:
-
-| Aspect | TestSuite | BenchSuite |
-|--------|-----------|------------|
-| **Purpose** | Verify correctness | Measure performance |
-| **Function Naming** | `test_*` | `bench_*` |
-| **File Naming** | `test_*.mojo` | `bench_*.mojo` |
-| **Discovery** | Python script (`run_tests.py`) | Python script (`run_benchmarks.py`) |
-| **Registration** | Manual: `suite.test[func]()` | Manual + Adaptive: `auto_benchmark[func]()` |
-| **Assertions** | `assert_equal()`, `assert_true()`, etc. | Statistical measurements (mean/min/max) |
-| **Output** | Pass/Fail per test | Execution time statistics |
-| **Iteration** | Run once (or until failure) | Multiple iterations for reliability |
-| **Environment** | Not captured | **Automatically captured** (OS, version, timestamp) |
-| **Reports** | Console output | Console + Markdown + CSV + Timestamped files |
-| **Result Persistence** | Ephemeral (console only) | **Saved to disk** with timestamps |
-| **Comparison** | N/A | Future: baseline comparison |
-| **Primary Goal** | "Does it work correctly?" | "How fast is it?" |
-| **Secondary Goal** | Documentation | **Reproducibility & regression detection** |
-
-### Key Philosophical Differences
-
-**TestSuite focuses on correctness:**
-- Binary outcome: pass or fail
-- Deterministic (same inputs → same result)
-- Environment doesn't matter for correctness
-
-**BenchSuite focuses on performance:**
-- Continuous outcome: execution time
-- Non-deterministic (varies by environment, system load)
-- **Environment is critical** for interpreting results
-- Statistical analysis required (outliers, variance)
-
-### Why Environment Capture Matters for Benchmarks
-
-Unlike tests, benchmark results are meaningless without context:
-
-```markdown
-# Without environment context
-"My algorithm runs in 50ns"
-❌ Is that fast or slow?
-❌ What CPU?
-❌ What Mojo version?
-❌ Debug or release build?
-
-# With BenchSuite environment capture
-"Environment: Mojo 0.26.1+ | OS: macOS | Timestamp: 2026-01-17 14:30:22"
-"my_algorithm: 50ns (mean), 45ns (min), 120ns (max), 1M iterations"
-✅ Reproducible
-✅ Can detect regressions
-✅ Can compare across machines
-✅ Can share with confidence
-```
-
-### Usage Pattern Similarity
-
-Both follow similar discovery patterns:
-
-**TestSuite:**
-```bash
-tests/
-  test_parser.mojo
-  test_lexer.mojo
-  test_writer.mojo
-
-python scripts/run_tests.py  # Discovers all test_*.mojo
-```
-
-**BenchSuite:**
-```bash
-benchmarks/
-  bench_algorithms.mojo
-  bench_data_structures.mojo
-  bench_string_ops.mojo
-
-pixi run bench-all  # Discovers all bench_*.mojo
-```
-
-This consistency makes it easy to adopt BenchSuite if you're already familiar with TestSuite!

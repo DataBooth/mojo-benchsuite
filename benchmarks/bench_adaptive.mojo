@@ -6,7 +6,7 @@ Demonstrates:
 - Simple, low-boilerplate benchmark definitions
 """
 
-from benchsuite import BenchReport
+from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from std.collections import List
 
 
@@ -45,17 +45,11 @@ def main():
     print("Mojo BenchSuite - Auto-Adaptive Example")
     print("=" * 60)
     print()
-    
-    # Create report with auto-print enabled (default)
-    var report = BenchReport()
-    
-    # Benchmark functions - results automatically print as they complete
-    report.benchmark[add_numbers]("add_numbers", 0.5)
-    report.benchmark[sum_loop]("sum_loop", 0.5)
-    report.benchmark[concat_strings]("concat_strings", 0.5)
-    report.benchmark[build_list]("build_list", 0.5)
-    
-    print()
-    print("Notice how iteration counts vary based on operation speed:")
-    print("- Fast operations: More iterations for reliable statistics")
-    print("- Slow operations: Fewer iterations to keep runtime reasonable")
+
+    var results = List[BenchResult]()
+    results.append(auto_benchmark[add_numbers]("add_numbers", 0.5))
+    results.append(auto_benchmark[sum_loop]("sum_loop", 0.5))
+    results.append(auto_benchmark[concat_strings]("concat_strings", 0.5))
+    results.append(auto_benchmark[build_list]("build_list", 0.5))
+
+    run_benchmarks(results, "adaptive")
