@@ -10,7 +10,7 @@ from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from std.collections import List
 
 
-fn build_config_payload():
+def build_config_payload():
     var lines = List[String]()
     for i in range(40):
         var key = String("service.option_") + String(i)
@@ -24,7 +24,7 @@ fn build_config_payload():
     _ = payload
 
 
-fn merge_config_layers():
+def merge_config_layers():
     var base = List[String]()
     var override = List[String]()
     for i in range(64):
@@ -40,21 +40,21 @@ fn merge_config_layers():
     _ = len(merged)
 
 
-fn validate_required_keys():
+def validate_required_keys():
     var entries = List[String]()
     for i in range(100):
         entries.append("required_" + String(i))
 
     var valid = True
     for i in range(100):
-        if len(entries[i]) == 0:
+        if entries[i].byte_length() == 0:
             valid = False
     _ = valid
 
 
-def main():
+def main() raises:
     var results = List[BenchResult]()
-    results.append(auto_benchmark[build_config_payload]("config_build_payload", 0.5))
-    results.append(auto_benchmark[merge_config_layers]("config_merge_layers", 0.5))
-    results.append(auto_benchmark[validate_required_keys]("config_validate_required", 0.5))
+    results.append(auto_benchmark("config_build_payload", build_config_payload, 0.5))
+    results.append(auto_benchmark("config_merge_layers", merge_config_layers, 0.5))
+    results.append(auto_benchmark("config_validate_required", validate_required_keys, 0.5))
     run_benchmarks(results, "config_workloads")

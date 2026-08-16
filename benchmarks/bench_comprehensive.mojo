@@ -8,20 +8,19 @@ This example shows:
 """
 
 from benchsuite import BenchResult, auto_benchmark, run_benchmarks
-from random import random_float64
 from std.collections import List
 
 
-fn bench_simple_arithmetic():
+def bench_simple_arithmetic():
     """Benchmark basic arithmetic operations."""
     var a = 42.0
-    var b = random_float64(0, 100)
+    var b = 58.0
     var c = a + b
     var d = c * 2.5
     _ = d / 1.5
 
 
-fn bench_loop_small():
+def bench_loop_small():
     """Benchmark small loop (100 iterations)."""
     var s: Float64 = 0.0
     for i in range(100):
@@ -29,7 +28,7 @@ fn bench_loop_small():
     _ = s
 
 
-fn bench_loop_medium():
+def bench_loop_medium():
     """Benchmark medium loop (1000 iterations)."""
     var s: Float64 = 0.0
     for i in range(1000):
@@ -37,7 +36,7 @@ fn bench_loop_medium():
     _ = s
 
 
-fn bench_string_concat():
+def bench_string_concat():
     """Benchmark string concatenation."""
     var s = String("Hello")
     s += " "
@@ -46,7 +45,7 @@ fn bench_string_concat():
     _ = s
 
 
-fn bench_list_ops():
+def bench_list_ops():
     """Benchmark list operations."""
     var lst = List[Int]()
     for i in range(50):
@@ -57,15 +56,15 @@ fn bench_list_ops():
     _ = sum_val
 
 
-def main():
+def main() raises:
     print("Mojo BenchSuite - Comprehensive Example")
     print("=" * 60)
     print()
     
     var results = List[BenchResult]()
-    results.append(auto_benchmark[bench_simple_arithmetic]("simple_arithmetic", 0.5))
-    results.append(auto_benchmark[bench_loop_small]("loop_small_100", 0.5))
-    results.append(auto_benchmark[bench_loop_medium]("loop_medium_1k", 0.5))
-    results.append(auto_benchmark[bench_string_concat]("string_concat", 0.5))
-    results.append(auto_benchmark[bench_list_ops]("list_ops_50", 0.5))
+    results.append(auto_benchmark("simple_arithmetic", bench_simple_arithmetic, 0.5))
+    results.append(auto_benchmark("loop_small_100", bench_loop_small, 0.5))
+    results.append(auto_benchmark("loop_medium_1k", bench_loop_medium, 0.5))
+    results.append(auto_benchmark("string_concat", bench_string_concat, 0.5))
+    results.append(auto_benchmark("list_ops_50", bench_list_ops, 0.5))
     run_benchmarks(results, "comprehensive")

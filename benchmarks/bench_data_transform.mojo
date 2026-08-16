@@ -10,7 +10,7 @@ from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from std.collections import List
 
 
-fn transform_normalise():
+def transform_normalise():
     var input = List[Int]()
     for i in range(500):
         input.append((i * 13) % 97)
@@ -21,7 +21,7 @@ fn transform_normalise():
     _ = len(output)
 
 
-fn transform_filter():
+def transform_filter():
     var input = List[Int]()
     for i in range(1_000):
         input.append(i)
@@ -33,7 +33,7 @@ fn transform_filter():
     _ = len(filtered)
 
 
-fn transform_aggregate():
+def transform_aggregate():
     var input = List[Float64]()
     for i in range(1_000):
         input.append(Float64((i * 7) % 101) * 0.25)
@@ -45,9 +45,9 @@ fn transform_aggregate():
     _ = mean
 
 
-def main():
+def main() raises:
     var results = List[BenchResult]()
-    results.append(auto_benchmark[transform_normalise]("transform_normalise", 0.5))
-    results.append(auto_benchmark[transform_filter]("transform_filter", 0.5))
-    results.append(auto_benchmark[transform_aggregate]("transform_aggregate", 0.5))
+    results.append(auto_benchmark("transform_normalise", transform_normalise, 0.5))
+    results.append(auto_benchmark("transform_filter", transform_filter, 0.5))
+    results.append(auto_benchmark("transform_aggregate", transform_aggregate, 0.5))
     run_benchmarks(results, "data_transform")

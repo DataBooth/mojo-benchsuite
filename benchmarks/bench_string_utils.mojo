@@ -19,10 +19,10 @@ from std.collections import List
 
 
 # Wrapper functions for benchmarking
-fn bench_concat_strings():
+def bench_concat_strings():
     _ = concat_many_strings(50)
 
-fn bench_csv_line():
+def bench_csv_line():
     var fields = List[String]()
     fields.append("name")
     fields.append("age")
@@ -30,16 +30,16 @@ fn bench_csv_line():
     fields.append("city")
     _ = build_csv_line(fields)
 
-fn bench_repeat():
+def bench_repeat():
     _ = repeat_string("Hello", 20)
 
-fn bench_length_sum():
+def bench_length_sum():
     var strings = List[String]()
     for i in range(10):
         strings.append("item")
     _ = string_length_sum(strings)
 
-fn bench_path_join():
+def bench_path_join():
     var parts = List[String]()
     parts.append("home")
     parts.append("user")
@@ -48,7 +48,7 @@ fn bench_path_join():
     _ = build_path(parts)
 
 
-def main():
+def main() raises:
     print("Mojo BenchSuite - String Utilities Benchmark")
     print("=" * 60)
     print()
@@ -63,9 +63,9 @@ def main():
     print()
     
     var results = List[BenchResult]()
-    results.append(auto_benchmark[bench_concat_strings]("concat_many_strings", 0.5))
-    results.append(auto_benchmark[bench_csv_line]("build_csv_line", 0.5))
-    results.append(auto_benchmark[bench_repeat]("repeat_string", 0.5))
-    results.append(auto_benchmark[bench_length_sum]("string_length_sum", 0.5))
-    results.append(auto_benchmark[bench_path_join]("build_path", 0.5))
+    results.append(auto_benchmark("concat_many_strings", bench_concat_strings, 0.5))
+    results.append(auto_benchmark("build_csv_line", bench_csv_line, 0.5))
+    results.append(auto_benchmark("repeat_string", bench_repeat, 0.5))
+    results.append(auto_benchmark("string_length_sum", bench_length_sum, 0.5))
+    results.append(auto_benchmark("build_path", bench_path_join, 0.5))
     run_benchmarks(results, "string_utils")

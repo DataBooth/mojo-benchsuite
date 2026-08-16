@@ -1,6 +1,6 @@
 [workspace]
 authors = ["Michael Booth <michael@databooth.com.au>"]
-channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
+channels = ["conda-forge", "https://conda.modular.com/max"]
 name = "mojo-benchsuite"
 platforms = ["osx-arm64", "linux-64"]
 version = "0.9.1"
@@ -36,8 +36,12 @@ clean-md = "rm -f benchmarks/reports/*.md"
 clean-csv = "rm -f benchmarks/reports/*.csv"
 list-reports = "ls -lh benchmarks/reports/ | grep -v '^total' | grep -v '.gitkeep'"
 
-# Testing
-test = "echo 'No tests yet'"
+# Testing / validation
+test = "python scripts/run_benchmarks.py --only bench_adaptive --summary-json benchmarks/reports/test_summary.json"
+prek = "prek run --all-files"
+prek-install = "prek install -f"
 
 [dependencies]
-mojo = "*"
+mojo = "==1.0.0"
+python = ">=3.11,<4"
+prek = ">=0.4.5,<1"

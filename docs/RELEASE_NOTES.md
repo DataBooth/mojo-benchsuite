@@ -1,4 +1,14 @@
 # Release Notes
+## Unreleased
+### Mojo 1.0 migration (Wave B)
+- Switched workspace channels from nightly to stable (`https://conda.modular.com/max`) and pinned runtime dependency to `mojo ==1.0.0`.
+- Added a concrete validation task (`pixi run test`) that executes an adaptive benchmark smoke suite and writes machine-readable summary JSON.
+- Migrated BenchSuite sources/examples/benchmarks from legacy `fn` syntax and older import paths to Mojo 1.0-compatible forms.
+- Updated callback execution to a Mojo 1.0-compatible callable API (`auto_benchmark(name, benchmark_func, min_runtime_secs)`), including thin-function compatibility.
+- Replaced Mojo 1.0-incompatible string and formatting APIs (`len(String)`, `String.ljust`) with explicit `byte_length()` and local padding helpers.
+- Validated with:
+  - `pixi run test` (adaptive smoke suite),
+  - `pixi run bench-all` (all six benchmark suites completing successfully).
 
 ## 0.9.1
 

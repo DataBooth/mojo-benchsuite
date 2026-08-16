@@ -1,21 +1,20 @@
 from std.collections import List, Optional
-from time import perf_counter
-from sys import info
-from python import Python
+from std.time import perf_counter
+from std.sys import num_physical_cores
+from std.python import Python
 
 struct EnvironmentInfo(Copyable, Movable):
     var mojo_version: String
     var os_info: String
     var cpu_info: String
 
-    fn __init__(out self):
+    def __init__(out self):
         # Runtime-safe default; avoid Python subprocess interop here because
         # keyword-argument typing changed in newer Mojo toolchains.
         self.mojo_version = "unknown"
         
         # Get CPU info using Mojo's sys.info
-        var cores = info.num_physical_cores()
-        var arch = "x86_64" if info.is_64bit() else "x86"
+        var cores = num_physical_cores()
         
         # Get OS name and CPU model using Python
         try:
@@ -30,12 +29,12 @@ struct EnvironmentInfo(Copyable, Movable):
                 self.cpu_info = processor + " (" + String(cores) + " cores)"
             else:
                 # Fallback to just core count and arch
-                self.cpu_info = String(cores) + " cores (" + arch + ")"
+                self.cpu_info = String(cores) + " cores"
         except:
             self.os_info = "unknown"
-            self.cpu_info = String(cores) + " cores (" + arch + ")"
+            self.cpu_info = String(cores) + " cores"
 
-    fn format(self) -> String:
+    def format(self) -> String:
         return "Environment: Mojo " + self.mojo_version + " | OS: " + self.os_info + " | CPU: " + self.cpu_info
 
 struct BenchResult(Copyable, Movable):
@@ -51,7 +50,7 @@ struct BenchResult(Copyable, Movable):
     var total_time_ns: Float64
     var loops_per_sample: Int
     
-    fn __init__(
+    def __init__(
         out self,
         name: String,
         mean_time_ns: Float64,
@@ -75,7 +74,7 @@ struct BenchResult(Copyable, Movable):
         self.total_time_ns = total_time_ns
         self.loops_per_sample = loops_per_sample
     
-    fn copy(self) -> Self:
+    def copy(self) -> Self:
         return BenchResult(
             self.name,
             self.mean_time_ns,
@@ -97,7 +96,7 @@ struct BenchReport:
     var save_dir: String
     var name_prefix: String
 
-    fn __init__(out self, auto_print: Bool = True, auto_save: Bool = False, 
+    def __init__(out self, auto_print: Bool = True, auto_save: Bool = False, 
                 save_dir: String = "benchmarks/reports", name_prefix: String = "benchmark"):
         """Create a benchmark report.
         
@@ -114,14 +113,14 @@ struct BenchReport:
         self.save_dir = save_dir
         self.name_prefix = name_prefix
     
-    fn benchmark[func: fn() -> None](mut self, name: String, min_runtime_secs: Float64 = 1.0):
+    def benchmark(mut self, name: String, benchmark_func: def() thin -> None, min_runtime_secs: Float64 = 1.0):
         """Run a benchmark with adaptive iteration counting.
         
         Args:
             name: Name of the benchmark
             min_runtime_secs: Minimum target runtime in seconds (default: 1.0)
         """
-        var result = auto_benchmark[func](name, min_runtime_secs)
+        var result = auto_benchmark(name, benchmark_func, min_runtime_secs)
         var result_copy = result.copy()
         self.add_result(result^)
         
@@ -134,10 +133,10 @@ struct BenchReport:
             except:
                 print("Warning: Failed to save report")
     
-    fn add_result(mut self, var result: BenchResult):
+    def add_result(mut self, var result: BenchResult):
         self.results.append(result^)
     
-    fn _print_single_result(self, result: BenchResult):
+    def _print_single_result(self, result: BenchResult):
         """Print a single benchmark result."""
         if len(self.results) == 1:
             # First result - print header
@@ -159,13 +158,13 @@ struct BenchReport:
         var total_secs = total_time_ns / 1_000_000_000.0
         var total_str = String(Float64(Int(total_secs * 100.0)) / 100.0)
         
-        print(result.name.ljust(28) + " " + mean_str.ljust(11) + " " +
-              p50_str.ljust(11) + " " + p95_str.ljust(11) + " " +
-              p99_str.ljust(11) + " " + min_str.ljust(11) + " " +
-              max_str.ljust(11) + " " +
-              String(result.iterations).ljust(11) + " " + total_str)
+        print(self._pad_right(result.name, 28) + " " + self._pad_right(mean_str, 11) + " " +
+              self._pad_right(p50_str, 11) + " " + self._pad_right(p95_str, 11) + " " +
+              self._pad_right(p99_str, 11) + " " + self._pad_right(min_str, 11) + " " +
+              self._pad_right(max_str, 11) + " " +
+              self._pad_right(String(result.iterations), 11) + " " + total_str)
 
-    fn print_console(self):
+    def print_console(self):
         """Print results in human-readable console format."""
         if self.env:
             print(self.env.value().format())
@@ -191,13 +190,13 @@ struct BenchReport:
             var total_secs = total_time_ns / 1_000_000_000.0
             var total_str = String(Float64(Int(total_secs * 100.0)) / 100.0)
             
-            print(r.name.ljust(28) + " " + mean_str.ljust(11) + " " +
-                  p50_str.ljust(11) + " " + p95_str.ljust(11) + " " +
-                  p99_str.ljust(11) + " " + min_str.ljust(11) + " " +
-                  max_str.ljust(11) + " " +
-                  String(r.iterations).ljust(11) + " " + total_str)
+            print(self._pad_right(r.name, 28) + " " + self._pad_right(mean_str, 11) + " " +
+                  self._pad_right(p50_str, 11) + " " + self._pad_right(p95_str, 11) + " " +
+                  self._pad_right(p99_str, 11) + " " + self._pad_right(min_str, 11) + " " +
+                  self._pad_right(max_str, 11) + " " +
+                  self._pad_right(String(r.iterations), 11) + " " + total_str)
     
-    fn to_markdown(self) -> String:
+    def to_markdown(self) -> String:
         """Export results as Markdown table with total runtime column."""
         var md = String("# Benchmark Results\n\n")
         
@@ -225,7 +224,7 @@ struct BenchReport:
         
         return md
     
-    fn to_csv(self) -> String:
+    def to_csv(self) -> String:
         """Export results as CSV."""
         var csv = String("benchmark,mean_ns,p50_ns,p95_ns,p99_ns,mean_us,mean_ms,min_ns,max_ns,iterations,loops_per_sample,total_time_ns,total_time_s\n")
         
@@ -251,7 +250,7 @@ struct BenchReport:
         
         return csv
     
-    fn save_report(self, output_dir: String, name_prefix: String) raises:
+    def save_report(self, output_dir: String, name_prefix: String) raises:
         """Save reports to disk with timestamped filenames.
         
         Creates markdown and CSV files with format:
@@ -261,7 +260,7 @@ struct BenchReport:
             output_dir: Directory to save reports (will be created if needed)
             name_prefix: Prefix for report files (e.g., "bench_adaptive")
         """
-        from python import Python
+        from std.python import Python
         
         # Get timestamp using Python's datetime
         var datetime = Python.import_module("datetime")
@@ -288,7 +287,7 @@ struct BenchReport:
         print("  Markdown: " + md_filename)
         print("  CSV:      " + csv_filename)
     
-    fn _format_time(self, ns: Float64) -> String:
+    def _format_time(self, ns: Float64) -> String:
         """Format time in appropriate units with 3 significant figures."""
         if ns < 1000.0:
             # For nanoseconds, show integer
@@ -306,7 +305,7 @@ struct BenchReport:
             var s = ns / 1_000_000_000.0
             return self._format_number(s) + " s"
     
-    fn _format_number(self, value: Float64) -> String:
+    def _format_number(self, value: Float64) -> String:
         """Format number with 3 significant figures."""
         if value < 10.0:
             # e.g. 1.23, 9.87
@@ -318,18 +317,28 @@ struct BenchReport:
             # e.g. 123, 9870
             return String(Int(value))
 
+    def _pad_right(self, text: String, width: Int) -> String:
+        """Right-pad text with spaces up to width (UTF-8 byte count)."""
+        var padded = text
+        var text_width = text.byte_length()
+        if text_width >= width:
+            return padded
+        for _ in range(width - text_width):
+            padded += " "
+        return padded
+
 # Note: Auto-discovery requires reflection capabilities not yet available in current Mojo
 # This is a placeholder for future implementation
 struct BenchSuite:
     var bench_names: List[String]
 
-    fn __init__(out self):
+    def __init__(out self):
         self.bench_names = List[String]()
     
-    fn add_bench(inout self, name: String):
+    def add_bench(inout self, name: String):
         self.bench_names.append(name)
 
-    fn run(inout self, config: BenchConfig) -> BenchReport:
+    def run(inout self, config: BenchConfig) -> BenchReport:
         var report = BenchReport()
         if config.capture_env:
             report.env = EnvironmentInfo()
@@ -343,7 +352,7 @@ struct BenchConfig:
     var capture_env: Bool
     var export_json: Bool
     
-    fn __init__(out self, warmup_iters: Int = 5, max_iters: Int = 1000, 
+    def __init__(out self, warmup_iters: Int = 5, max_iters: Int = 1000, 
                 min_total_time: Float64 = 1.0, unit: String = "ms",
                 capture_env: Bool = True, export_json: Bool = False):
         self.warmup_iters = warmup_iters
@@ -353,13 +362,13 @@ struct BenchConfig:
         self.capture_env = capture_env
         self.export_json = export_json
 
-fn _copy_samples(values: List[Float64]) -> List[Float64]:
+def _copy_samples(values: List[Float64]) -> List[Float64]:
     var copied = List[Float64]()
     for i in range(len(values)):
         copied.append(values[i])
     return copied^
 
-fn _insertion_sort(mut values: List[Float64]):
+def _insertion_sort(mut values: List[Float64]):
     if len(values) < 2:
         return
     for i in range(1, len(values)):
@@ -370,7 +379,7 @@ fn _insertion_sort(mut values: List[Float64]):
             j -= 1
         values[j + 1] = key
 
-fn _percentile_from_sorted(values: List[Float64], percentile: Float64) -> Float64:
+def _percentile_from_sorted(values: List[Float64], percentile: Float64) -> Float64:
     if len(values) == 0:
         return 0.0
     if len(values) == 1:
@@ -385,7 +394,7 @@ fn _percentile_from_sorted(values: List[Float64], percentile: Float64) -> Float6
     var idx = Int(p * Float64(len(values) - 1))
     return values[idx]
 
-fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 1.0) -> BenchResult:
+def auto_benchmark(name: String, benchmark_func: def() thin -> None, min_runtime_secs: Float64 = 1.0) -> BenchResult:
     """Automatically run benchmark with adaptive iteration count.
     
     Runs calibrated batches to reduce timer noise for very fast functions, while
@@ -400,7 +409,7 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     """
     # Warm-up to reduce first-run effects.
     for _ in range(5):
-        func()
+        benchmark_func()
 
     # Calibrate loops per sample so each measured sample has enough duration
     # to reduce timer resolution noise.
@@ -409,7 +418,7 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     while loops_per_sample < 10_000_000:
         var calibration_start = perf_counter()
         for _ in range(loops_per_sample):
-            func()
+            benchmark_func()
         var calibration_elapsed = perf_counter() - calibration_start
 
         if calibration_elapsed >= calibration_target_secs:
@@ -436,7 +445,7 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     while len(times) < max_samples:
         var sample_start = perf_counter()
         for _ in range(loops_per_sample):
-            func()
+            benchmark_func()
         var sample_elapsed_ns = (perf_counter() - sample_start) * 1_000_000_000.0
         total_time_ns += sample_elapsed_ns
 
@@ -482,7 +491,7 @@ fn auto_benchmark[func: fn() -> None](name: String, min_runtime_secs: Float64 = 
     )
 
 
-fn run_benchmarks(results: List[BenchResult], name: String, 
+def run_benchmarks(results: List[BenchResult], name: String, 
                   save_reports: Bool = True, output_dir: String = "benchmarks/reports") raises:
     """Simplified helper to run benchmarks and generate reports.
     
@@ -500,9 +509,9 @@ fn run_benchmarks(results: List[BenchResult], name: String,
     
     Example:
         var results = List[BenchResult]()
-        results.append(auto_benchmark[bench_func1]("bench_func1"))
-        results.append(auto_benchmark[bench_func2]("bench_func2"))
-        run_benchmarks(results, "my_benchmark")
+        results.append(auto_benchmark("bench_func1"))
+        results.append(auto_benchmark[type_of(bench_func2)]("bench_func2"))
+        run_benchmarks(results, bench_func1, "my_benchmark")
     """
     var report = BenchReport()
     report.env = EnvironmentInfo()

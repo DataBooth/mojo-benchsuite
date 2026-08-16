@@ -10,7 +10,7 @@ from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from std.collections import List
 
 
-fn startup_bootstrap_config_graph():
+def startup_bootstrap_config_graph():
     var nodes = List[String]()
     for i in range(700):
         var node = String("service.") + String(i)
@@ -25,7 +25,7 @@ fn startup_bootstrap_config_graph():
     _ = len(merged)
 
 
-fn startup_initialise_registry():
+def startup_initialise_registry():
     var registry = List[List[Int]]()
     for i in range(220):
         var bucket = List[Int]()
@@ -40,7 +40,7 @@ fn startup_initialise_registry():
     _ = checksum
 
 
-fn startup_prepare_request_shapes():
+def startup_prepare_request_shapes():
     var templates = List[String]()
     for i in range(1_200):
         var template = String("{\"path\":\"/v1/resource/")
@@ -54,14 +54,14 @@ fn startup_prepare_request_shapes():
     _ = byte_count
 
 
-def main():
+def main() raises:
     print("Mojo BenchSuite - Service Startup Example")
     print("=" * 60)
     print("Longer targets are used here to reduce variance.")
     print()
 
     var results = List[BenchResult]()
-    results.append(auto_benchmark[startup_bootstrap_config_graph]("startup_bootstrap_config_graph", 3.0))
-    results.append(auto_benchmark[startup_initialise_registry]("startup_initialise_registry", 3.0))
-    results.append(auto_benchmark[startup_prepare_request_shapes]("startup_prepare_request_shapes", 3.0))
+    results.append(auto_benchmark("startup_bootstrap_config_graph", startup_bootstrap_config_graph, 3.0))
+    results.append(auto_benchmark("startup_initialise_registry", startup_initialise_registry, 3.0))
+    results.append(auto_benchmark("startup_prepare_request_shapes", startup_prepare_request_shapes, 3.0))
     run_benchmarks(results, "example_service_startup")

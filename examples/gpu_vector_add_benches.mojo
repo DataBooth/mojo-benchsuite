@@ -18,7 +18,7 @@ comptime VECTOR_WIDTH = 16_384
 comptime BLOCK_SIZE = 256
 
 
-fn vector_add_kernel(
+def vector_add_kernel(
     lhs: UnsafePointer[Float32, MutAnyOrigin],
     rhs: UnsafePointer[Float32, MutAnyOrigin],
     output: UnsafePointer[Float32, MutAnyOrigin],
@@ -29,7 +29,7 @@ fn vector_add_kernel(
         output[tid] = lhs[tid] + rhs[tid]
 
 
-fn cpu_vector_add_reference():
+def cpu_vector_add_reference():
     var lhs = List[Float64]()
     var rhs = List[Float64]()
     var output = List[Float64]()
@@ -45,14 +45,14 @@ fn cpu_vector_add_reference():
     _ = output[0]
 
 
-fn _copy_samples(values: List[Float64]) -> List[Float64]:
+def _copy_samples(values: List[Float64]) -> List[Float64]:
     var copied = List[Float64]()
     for i in range(len(values)):
         copied.append(values[i])
     return copied^
 
 
-fn _insertion_sort(mut values: List[Float64]):
+def _insertion_sort(mut values: List[Float64]):
     if len(values) < 2:
         return
     for i in range(1, len(values)):
@@ -64,7 +64,7 @@ fn _insertion_sort(mut values: List[Float64]):
         values[j + 1] = key
 
 
-fn _percentile_from_sorted(values: List[Float64], percentile: Float64) -> Float64:
+def _percentile_from_sorted(values: List[Float64], percentile: Float64) -> Float64:
     if len(values) == 0:
         return 0.0
     if len(values) == 1:
@@ -73,7 +73,7 @@ fn _percentile_from_sorted(values: List[Float64], percentile: Float64) -> Float6
     return values[idx]
 
 
-fn benchmark_gpu_vector_add(min_runtime_secs: Float64 = 2.0) raises -> BenchResult:
+def benchmark_gpu_vector_add(min_runtime_secs: Float64 = 2.0) raises -> BenchResult:
     var ctx = DeviceContext()
 
     var lhs_buffer = ctx.enqueue_create_buffer[DType.float32](VECTOR_WIDTH)
@@ -148,13 +148,13 @@ fn benchmark_gpu_vector_add(min_runtime_secs: Float64 = 2.0) raises -> BenchResu
     )
 
 
-def main():
+def main() raises:
     print("Mojo BenchSuite - GPU Vector Add Example")
     print("=" * 60)
     print()
 
     var results = List[BenchResult]()
-    results.append(auto_benchmark[cpu_vector_add_reference]("cpu_vector_add_reference", 1.0))
+    results.append(auto_benchmark("cpu_vector_add_reference", cpu_vector_add_reference, 1.0))
 
     if has_accelerator():
         try:

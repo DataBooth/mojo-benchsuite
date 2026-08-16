@@ -6,15 +6,13 @@ This is the fastest path to running BenchSuite examples and practical suites.
 ```mojo
 from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from std.collections import List
-
-fn bench_add():
+def bench_add():
     var a = 40
     var b = 2
     _ = a + b
-
-fn main():
+def main() raises:
     var results = List[BenchResult]()
-    results.append(auto_benchmark[bench_add]("bench_add", 0.3))
+    results.append(auto_benchmark("bench_add", bench_add, 0.3))
     run_benchmarks(results, "quickstart_demo")
 ```
 

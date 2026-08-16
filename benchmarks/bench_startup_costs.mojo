@@ -10,7 +10,7 @@ from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from std.collections import List
 
 
-fn startup_small_context():
+def startup_small_context():
     var args = List[String]()
     args.append("--mode=dev")
     args.append("--threads=4")
@@ -23,7 +23,7 @@ fn startup_small_context():
     _ = context
 
 
-fn startup_allocator_pressure():
+def startup_allocator_pressure():
     var blocks = List[List[Int]]()
     for i in range(32):
         var block = List[Int]()
@@ -33,7 +33,7 @@ fn startup_allocator_pressure():
     _ = len(blocks)
 
 
-fn startup_pipeline_registration():
+def startup_pipeline_registration():
     var stages = List[String]()
     stages.append("load-config")
     stages.append("init-logging")
@@ -48,9 +48,9 @@ fn startup_pipeline_registration():
     _ = manifest
 
 
-def main():
+def main() raises:
     var results = List[BenchResult]()
-    results.append(auto_benchmark[startup_small_context]("startup_small_context", 0.5))
-    results.append(auto_benchmark[startup_allocator_pressure]("startup_allocator_pressure", 0.5))
-    results.append(auto_benchmark[startup_pipeline_registration]("startup_pipeline_registration", 0.5))
+    results.append(auto_benchmark("startup_small_context", startup_small_context, 0.5))
+    results.append(auto_benchmark("startup_allocator_pressure", startup_allocator_pressure, 0.5))
+    results.append(auto_benchmark("startup_pipeline_registration", startup_pipeline_registration, 0.5))
     run_benchmarks(results, "startup_costs")

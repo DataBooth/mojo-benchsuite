@@ -10,7 +10,7 @@ from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from std.collections import List
 
 
-fn pipeline_normalise_events():
+def pipeline_normalise_events():
     var values = List[Int]()
     for i in range(2_000):
         values.append((i * 37) % 997)
@@ -23,7 +23,7 @@ fn pipeline_normalise_events():
     _ = len(normalised)
 
 
-fn pipeline_aggregate_features():
+def pipeline_aggregate_features():
     var matrix = List[List[Int]]()
     for i in range(120):
         var row = List[Int]()
@@ -38,7 +38,7 @@ fn pipeline_aggregate_features():
     _ = score
 
 
-fn pipeline_serialise_batch():
+def pipeline_serialise_batch():
     var lines = List[String]()
     for i in range(600):
         var line = String("event_id=") + String(i)
@@ -54,14 +54,14 @@ fn pipeline_serialise_batch():
     _ = len(payload)
 
 
-def main():
+def main() raises:
     print("Mojo BenchSuite - Complex Pipeline Example")
     print("=" * 60)
     print("Each benchmark targets a longer runtime for stability.")
     print()
 
     var results = List[BenchResult]()
-    results.append(auto_benchmark[pipeline_normalise_events]("pipeline_normalise_events", 2.0))
-    results.append(auto_benchmark[pipeline_aggregate_features]("pipeline_aggregate_features", 2.0))
-    results.append(auto_benchmark[pipeline_serialise_batch]("pipeline_serialise_batch", 2.0))
+    results.append(auto_benchmark("pipeline_normalise_events", pipeline_normalise_events, 2.0))
+    results.append(auto_benchmark("pipeline_aggregate_features", pipeline_aggregate_features, 2.0))
+    results.append(auto_benchmark("pipeline_serialise_batch", pipeline_serialise_batch, 2.0))
     run_benchmarks(results, "example_complex_pipeline")
