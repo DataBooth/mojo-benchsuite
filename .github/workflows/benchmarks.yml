@@ -1,0 +1,80 @@
+name: Benchmarks
+
+on:
+  pull_request:
+  push:
+    branches: [main, feature/**]
+  workflow_dispatch:
+    inputs:
+      baseline_name:
+        description: Baseline name in benchmarks/baselines/<name>.json
+        required: false
+        default: main
+      regression_mode:
+        description: Enforce regressions as a failing check or report only
+        required: false
+        default: report
+        type: choice
+        options:
+          - report
+          - enforce
+      threshold_percent:
+        description: Regression threshold percentage
+        required: false
+        default: "5.0"
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.14
+        with:
+          pixi-version: latest
+
+      - name: Install dependencies
+        run: pixi install
+
+      - name: Run benchmarks and write summary
+        shell: bash
+        run: |
+          set -o pipefail
+          BASELINE_NAME="main"
+          REGRESSION_MODE="report"
+          THRESHOLD="5.0"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BASELINE_NAME="${{ inputs.baseline_name }}"
+            REGRESSION_MODE="${{ inputs.regression_mode }}"
+            THRESHOLD="${{ inputs.threshold_percent }}"
+          fi
+
+          ARGS=(
+            --summary-json benchmarks/reports/summary.json
+            --regression-threshold-percent "${THRESHOLD}"
+          )
+
+          if [[ -f "benchmarks/baselines/${BASELINE_NAME}.json" ]]; then
+            ARGS+=(--compare-baseline "${BASELINE_NAME}")
+          fi
+
+          if [[ "${REGRESSION_MODE}" == "enforce" ]]; then
+            ARGS+=(--fail-on-regression)
+          fi
+
+          pixi run bench-all -- "${ARGS[@]}"
+
+      - name: Upload benchmark artefacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-reports-${{ github.run_id }}
+          path: |
+            benchmarks/reports/*.md
+            benchmarks/reports/*.csv
+            benchmarks/reports/*.json
+            benchmarks/baselines/*.json
+          if-no-files-found: warn

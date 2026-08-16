@@ -7,8 +7,7 @@ This demonstrates the proper separation:
 The implementations are real, reusable code.
 The benchmark just measures their performance.
 """
-
-from benchsuite import EnvironmentInfo, BenchReport, BenchResult, auto_benchmark
+from benchsuite import BenchResult, auto_benchmark, run_benchmarks
 from implementations.string_utils import (
     concat_many_strings,
     build_csv_line,
@@ -16,14 +15,14 @@ from implementations.string_utils import (
     string_length_sum,
     build_path
 )
-from collections import List
+from std.collections import List
 
 
 # Wrapper functions for benchmarking
-fn bench_concat_strings():
+def bench_concat_strings():
     _ = concat_many_strings(50)
 
-fn bench_csv_line():
+def bench_csv_line():
     var fields = List[String]()
     fields.append("name")
     fields.append("age")
@@ -31,16 +30,16 @@ fn bench_csv_line():
     fields.append("city")
     _ = build_csv_line(fields)
 
-fn bench_repeat():
+def bench_repeat():
     _ = repeat_string("Hello", 20)
 
-fn bench_length_sum():
+def bench_length_sum():
     var strings = List[String]()
     for i in range(10):
         strings.append("item")
     _ = string_length_sum(strings)
 
-fn bench_path_join():
+def bench_path_join():
     var parts = List[String]()
     parts.append("home")
     parts.append("user")
@@ -49,7 +48,7 @@ fn bench_path_join():
     _ = build_path(parts)
 
 
-def main():
+def main() raises:
     print("Mojo BenchSuite - String Utilities Benchmark")
     print("=" * 60)
     print()
@@ -63,45 +62,10 @@ def main():
     print("=" * 60)
     print()
     
-    var report = BenchReport()
-    report.env = EnvironmentInfo()
-    
-    print("Running benchmarks...")
-    print()
-    
-    print("  [1/5] Benchmarking concat_many_strings...")
-    report.add_result(auto_benchmark[bench_concat_strings]("concat_many_strings", 0.5))
-    
-    print("  [2/5] Benchmarking build_csv_line...")
-    report.add_result(auto_benchmark[bench_csv_line]("build_csv_line", 0.5))
-    
-    print("  [3/5] Benchmarking repeat_string...")
-    report.add_result(auto_benchmark[bench_repeat]("repeat_string", 0.5))
-    
-    print("  [4/5] Benchmarking string_length_sum...")
-    report.add_result(auto_benchmark[bench_length_sum]("string_length_sum", 0.5))
-    
-    print("  [5/5] Benchmarking build_path...")
-    report.add_result(auto_benchmark[bench_path_join]("build_path", 0.5))
-    
-    print()
-    print("=" * 60)
-    print()
-    
-    # Display results
-    report.print_console()
-    
-    # Save reports
-    print()
-    print("=" * 60)
-    print()
-    
-    try:
-        report.save_report("benchmarks/reports", "string_utils")
-        print()
-        print("✓ Benchmark complete - reports saved to benchmarks/reports/")
-        print()
-        print("These implementations can be used in your projects!")
-        print("See: benchmarks/implementations/string_utils.mojo")
-    except:
-        print("✗ Note: Could not save reports to disk")
+    var results = List[BenchResult]()
+    results.append(auto_benchmark("concat_many_strings", bench_concat_strings, 0.5))
+    results.append(auto_benchmark("build_csv_line", bench_csv_line, 0.5))
+    results.append(auto_benchmark("repeat_string", bench_repeat, 0.5))
+    results.append(auto_benchmark("string_length_sum", bench_length_sum, 0.5))
+    results.append(auto_benchmark("build_path", bench_path_join, 0.5))
+    run_benchmarks(results, "string_utils")

@@ -1,9 +1,9 @@
 [workspace]
 authors = ["Michael Booth <michael@databooth.com.au>"]
-channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
+channels = ["conda-forge", "https://conda.modular.com/max"]
 name = "mojo-benchsuite"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.0"
+version = "0.9.1"
 
 [activation]
 env = { MOJO_PATH = "$PIXI_PROJECT_ROOT/src" }
@@ -14,12 +14,21 @@ mojo-version = "mojo --version"
 
 # Examples
 run-example = "mojo -I src examples/simple_benches.mojo"
+run-example-complex = "mojo -I src examples/complex_pipeline_benches.mojo"
+run-example-startup = "mojo -I src examples/service_startup_benches.mojo"
+run-example-gpu = "mojo -I src examples/gpu_vector_add_benches.mojo"
 
 # Benchmarks
 bench-comprehensive = "mojo -I src benchmarks/bench_comprehensive.mojo"
 bench-adaptive = "mojo -I src benchmarks/bench_adaptive.mojo"
 bench-strings = "mojo -I src -I benchmarks benchmarks/bench_string_utils.mojo"
+bench-config = "mojo -I src benchmarks/bench_config_workloads.mojo"
+bench-data-transform = "mojo -I src benchmarks/bench_data_transform.mojo"
+bench-startup = "mojo -I src benchmarks/bench_startup_costs.mojo"
 bench-all = "python scripts/run_benchmarks.py"
+bench-summary = "python scripts/run_benchmarks.py --summary-json benchmarks/reports/summary.json"
+bench-save-baseline = "python scripts/run_benchmarks.py --summary-json benchmarks/reports/summary.json --save-baseline local"
+bench-compare-baseline = "python scripts/run_benchmarks.py --summary-json benchmarks/reports/summary.json --compare-baseline local --regression-threshold-percent 5.0"
 
 # Report cleanup
 clean-reports = "rm -f benchmarks/reports/*.md benchmarks/reports/*.csv"
@@ -27,8 +36,12 @@ clean-md = "rm -f benchmarks/reports/*.md"
 clean-csv = "rm -f benchmarks/reports/*.csv"
 list-reports = "ls -lh benchmarks/reports/ | grep -v '^total' | grep -v '.gitkeep'"
 
-# Testing
-test = "echo 'No tests yet'"
+# Testing / validation
+test = "python scripts/run_benchmarks.py --only bench_adaptive --summary-json benchmarks/reports/test_summary.json"
+prek = "prek run --all-files"
+prek-install = "prek install -f"
 
 [dependencies]
-mojo = "*"
+mojo = "==1.0.0"
+python = ">=3.11,<4"
+prek = ">=0.4.5,<1"
