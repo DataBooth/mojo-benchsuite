@@ -12,6 +12,7 @@ __pycache__/
 benchmarks/reports/
 results/
 .benchmark_cache/
+kgen.trace.json.time-trace
 # pixi environments
 .pixi/*
 !.pixi/config.toml
